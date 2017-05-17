@@ -1,0 +1,18 @@
+<resources>
+    <declare-styleable name="SpeedometerView">
+
+        <attr name="backgroundColor" format="color|reference" />
+        <attr name="speedIndicatorColor" format="color|reference" />
+        <attr name="beforeArrowSectorColor" format="color|reference" />
+        <attr name="afterArrowSectorColor" format="color|reference" />
+
+        <attr name="sectorRadius" format="integer" />
+        <attr name="borderColor" format="integer" />
+        <attr name="arrowColor" format="color|reference" />
+        <attr name="innerSectorRadius" format="integer" />
+        <attr name="outerSectorRadius" format="integer" />
+        <attr name="maxSpeed" format="integer" />
+        <attr name="energyIcon" format="integer" />
+        <attr name="energyLine" format="integer" />
+    </declare-styleable>
+</resources>
