@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -63,13 +64,14 @@ public class SpeedometerView extends View {
 
     private float[] mMatrixFilter = new float[]{
             0, 0, 0, 0, 255,
-            0, 0, 0, 0, 200,
-            0, 0, 0, 0, 200,
-            0, 0, 0, 1, 200};
+            0, 255, 0, 0, 0,
+            0, 0, 0, 0, 0,
+            0, 0, 0, 1, 0};
 
     private ColorMatrixColorFilter mColorFilter;
 
     private Paint mPaint;
+    private Paint mPaint1;
     private TextPaint mTextPaint;
 
     private float mTextWidth;
@@ -91,6 +93,8 @@ public class SpeedometerView extends View {
     private float mCurrentSpeed;
     private float mCurrentFuelLevel = 100;
     private float mMaxFuelLevel = 100;
+
+    private Rect mTextRect;
 
     public SpeedometerView(Context context) {
         super(context);
@@ -135,6 +139,9 @@ public class SpeedometerView extends View {
         mTextPaint.setTextAlign(Paint.Align.LEFT);
 
         mPaint = new Paint();
+        mPaint1 = new Paint();
+
+        mTextRect = new Rect();
 
         mColorFilter = new ColorMatrixColorFilter(mMatrixFilter);
 
@@ -243,7 +250,7 @@ public class SpeedometerView extends View {
 
             angle = 10 + i*step;
             calculateCirclePoint(angle, contentHeight*SCALE_RADIUS_INDEX, pointF);
-            canvas.drawText(String.valueOf((int)10*i), pointF.x, pointF.y, mPaint);
+            drawText(canvas, String.valueOf((int)10*i), pointF.x, pointF.y, mPaint);
         }
     }
 
@@ -261,9 +268,15 @@ public class SpeedometerView extends View {
 
         canvas.drawBitmap(bitmap, null, rectF, mPaint);
 
-        mPaint.setColorFilter(mColorFilter);
-        mPaint.setColor(Color.GREEN);
-        mPaint.setStyle(Paint.Style.FILL);
+        mMatrixFilter = new float[]{
+                0, 0, 0, 0, (1 - mCurrentFuelLevel/100)*255,
+                0, 0, 0, 0, mCurrentFuelLevel/100*255,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 1, 0};
+
+        mPaint1.setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(mMatrixFilter)));
+//        mPaint.setColor(Color.GREEN);
+        mPaint1.setStyle(Paint.Style.FILL);
 
         Rect fuelLevel = new Rect(contentWidth/2, (int)(contentHeight*0.37f),
                 (int)(contentWidth/2) + (int)(contentHeight*0.3f*(mCurrentFuelLevel/mMaxFuelLevel)), (int)(contentHeight*0.42f));
@@ -277,15 +290,13 @@ public class SpeedometerView extends View {
 
             mAlphaLevel += mAlphaR;
 
-            mPaint.setAlpha(mAlphaLevel);
+            mPaint1.setAlpha(mAlphaLevel);
         }else {
             mAlphaLevel = 255;
-            mPaint.setAlpha(mAlphaLevel);
+            mPaint1.setAlpha(mAlphaLevel);
         }
 
-        mPaint.setColorFilter(null);
-
-        canvas.drawRect(fuelLevel, mPaint);
+        canvas.drawRect(fuelLevel, mPaint1);
     }
 
     private void drawArrow(Canvas canvas){
@@ -365,6 +376,11 @@ public class SpeedometerView extends View {
                 invalidate();
             }
         }, 3000);
+    }
+
+    private void drawText(Canvas canvas, String text, float x, float y, Paint paint){
+        paint.getTextBounds(text, 0, text.length(), mTextRect);
+        canvas.drawText(text, x - mTextRect.width()/2f, y + mTextRect.height()/2f, paint);
     }
 
     private void changeFuelLevel(){
