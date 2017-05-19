@@ -71,7 +71,7 @@ public class SpeedometerView extends View {
     private ColorMatrixColorFilter mColorFilter;
 
     private Paint mPaint;
-    private Paint mPaint1;
+    private Paint mFuelPaint;
     private TextPaint mTextPaint;
 
     private float mTextWidth;
@@ -139,7 +139,7 @@ public class SpeedometerView extends View {
         mTextPaint.setTextAlign(Paint.Align.LEFT);
 
         mPaint = new Paint();
-        mPaint1 = new Paint();
+        mFuelPaint = new Paint();
 
         mTextRect = new Rect();
 
@@ -274,9 +274,9 @@ public class SpeedometerView extends View {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 1, 0};
 
-        mPaint1.setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(mMatrixFilter)));
+        mFuelPaint.setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(mMatrixFilter)));
 //        mPaint.setColor(Color.GREEN);
-        mPaint1.setStyle(Paint.Style.FILL);
+        mFuelPaint.setStyle(Paint.Style.FILL);
 
         Rect fuelLevel = new Rect(contentWidth/2, (int)(contentHeight*0.37f),
                 (int)(contentWidth/2) + (int)(contentHeight*0.3f*(mCurrentFuelLevel/mMaxFuelLevel)), (int)(contentHeight*0.42f));
@@ -290,13 +290,13 @@ public class SpeedometerView extends View {
 
             mAlphaLevel += mAlphaR;
 
-            mPaint1.setAlpha(mAlphaLevel);
+            mFuelPaint.setAlpha(mAlphaLevel);
         }else {
             mAlphaLevel = 255;
-            mPaint1.setAlpha(mAlphaLevel);
+            mFuelPaint.setAlpha(mAlphaLevel);
         }
 
-        canvas.drawRect(fuelLevel, mPaint1);
+        canvas.drawRect(fuelLevel, mFuelPaint);
     }
 
     private void drawArrow(Canvas canvas){
