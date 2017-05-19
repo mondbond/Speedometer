@@ -18,31 +18,34 @@ import android.os.Handler;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 
-import android.util.Log;
 import android.view.View;
 
 public class SpeedometerView extends View {
-
-    private final float ARROW_CIRCLE_INDEX = 0.1f;
-    private final float ARROW_HEIGHT_INDEX = 0.3f;
-    private final float ARROW_WEIGHT_INDEX = 0.08f;
-    private final float ARROW_WEIGHT2_INDEX = 0.4f;
-    private final float SCALE_RADIUS_INDEX = 0.8f;
-
-    private final float SCALE_HEIGHT = 10;
-    private final float TEXT_HEIGHT = 0.1f;
-    private final float SCALES_WIDTH = 0.1f;
-
-    private final float TEXT_SIZE = 0.15f;
-
-    private final float FUEL_ICO_SIZE = 0.2f;
 
     private final float INNER_CIRCLE_WIDTH = 0.15f;
     private final float INNER_CIRCLE_RADIUS = 0.4f;
     private final float OUTER_CIRCLE_WIDTH = 0.05f;
 
-    private final float FUEL_X = 0.8f;
-    private final float FUEL_Y = 0.68f;
+    private final float SCALE_RADIUS_INDEX = 0.8f;
+    private final float BORDER_HEIGHT = 0.04F;
+    private final float SCALES_WIDTH = 0.1f;
+
+    private final float ARROW_CIRCLE_INDEX = 0.14f;
+    private final float ARROW_WEIGHT_INDEX = 0.08f;
+    private final float ARROW_WEIGHT2_INDEX = 0.4f;
+    private final float ARROW_HEIGHT_INDEX = 0.3f;
+
+    private final float TEXT_SIZE = 0.15f;
+
+    int paddingLeft;
+    int paddingTop;
+    int paddingRight;
+    int paddingBottom;
+
+    int contentWidth;
+    int contentHeight;
+
+    int generalRadius = getHeight() - paddingTop - paddingBottom + paddingLeft + paddingRight;
 
     private int mBackgroundColor = Color.GRAY;
     private int mSpeedIndicatorColor;
@@ -54,52 +57,37 @@ public class SpeedometerView extends View {
     private int mArrowColor;
     private int mInnerSectorRadius;
     private int mOuterSectorRadius;
-    private int mMaxSpeed = 100;
+    private int mMaxSpeed;
     private int mEnergyIcon;
     private int mEnergyLine;
 
-    private float mFuelConsumption = 1;
+    private float mTextWidth;
+    private float mTextHeight;
+
+    private RectF mBackgroundCircleRec;
+    private Rect mTextRect;
+    private RectF innerCircleRec;
+    private RectF mScaleCircleRec;
+    private Path mScalePath;
+
+    private Matrix mBitmapMatrix;
 
     private int mAlphaLevel = 255;
     private int mAlphaR = 10;
-
-    private float[] mMatrixFilter = new float[]{
-            0, 0, 0, 0, 255,
-            0, 255, 0, 0, 0,
-            0, 0, 0, 0, 0,
-            0, 0, 0, 1, 0};
-
-    private ColorMatrixColorFilter mColorFilter;
+    private float[] mMatrixFilter;
 
     private Paint mPaint;
     private Paint mFuelPaint;
     private TextPaint mTextPaint;
 
-    private float mTextWidth;
-    private float mTextHeight;
-
-    int paddingLeft = getPaddingLeft();
-    int paddingTop = getPaddingTop();
-    int paddingRight = getPaddingRight();
-    int paddingBottom = getPaddingBottom();
-
-    int contentWidth = getWidth() - paddingLeft - paddingRight;
-    int contentHeight = getHeight() - paddingTop - paddingBottom;
-
     private boolean stop;
     private boolean go;
-
-    private SpeedometerView.SpeedChangeListener listener;
 
     private float mCurrentSpeed;
     private float mCurrentFuelLevel = 100;
     private float mMaxFuelLevel = 100;
 
-    float centerX = contentWidth/2;
-    float centerY = contentHeight/2;
-    float radius = (float)contentHeight;
-
-    private Rect mTextRect;
+    private SpeedometerView.SpeedChangeListener listener;
 
     public SpeedometerView(Context context) {
         super(context);
@@ -121,19 +109,19 @@ public class SpeedometerView extends View {
         final TypedArray a = getContext().obtainStyledAttributes(
                 attrs, R.styleable.SpeedometerView, defStyle, 0);
 
-        mBackgroundColor = a.getColor(R.styleable.SpeedometerView_backgroundColor, Color.BLUE);
-        mSpeedIndicatorColor = a.getColor(R.styleable.SpeedometerView_speedIndicatorColor, Color.BLUE);
-        mBeforeArrowSectorColor = a.getColor(R.styleable.SpeedometerView_beforeArrowSectorColor, Color.BLUE);
-        mAfterArrowSectorColor = a.getColor(R.styleable.SpeedometerView_afterArrowSectorColor, Color.BLUE);
-        mBorderColor = a.getColor(R.styleable.SpeedometerView_borderColor, Color.BLUE);
-        mArrowColor = a.getColor(R.styleable.SpeedometerView_arrowColor, Color.BLUE);
+        mBackgroundColor = a.getColor(R.styleable.SpeedometerView_backgroundColor, Color.GRAY);
+        mSpeedIndicatorColor = a.getColor(R.styleable.SpeedometerView_speedIndicatorColor, Color.BLACK);
+        mBeforeArrowSectorColor = a.getColor(R.styleable.SpeedometerView_beforeArrowSectorColor, Color.BLACK);
+        mAfterArrowSectorColor = a.getColor(R.styleable.SpeedometerView_afterArrowSectorColor, Color.BLACK);
+        mBorderColor = a.getColor(R.styleable.SpeedometerView_borderColor, Color.BLACK);
+        mArrowColor = a.getColor(R.styleable.SpeedometerView_arrowColor, Color.BLACK);
 
-        mSectorRadius = a.getInteger(R.styleable.SpeedometerView_sectorRadius, Color.BLUE);
-        mInnerSectorRadius = a.getInteger(R.styleable.SpeedometerView_innerSectorRadius, Color.BLUE);
-        mOuterSectorRadius = a.getInteger(R.styleable.SpeedometerView_outerSectorRadius, Color.BLUE);
-        mMaxSpeed = a.getInteger(R.styleable.SpeedometerView_maxSpeed, 100);
-        mEnergyIcon = a.getInteger(R.styleable.SpeedometerView_energyIcon, Color.BLUE);
-        mEnergyLine = a.getInteger(R.styleable.SpeedometerView_energyLine, Color.BLUE);
+        mSectorRadius = a.getInteger(R.styleable.SpeedometerView_sectorRadius, Color.BLACK);
+        mInnerSectorRadius = a.getInteger(R.styleable.SpeedometerView_innerSectorRadius, Color.BLACK);
+        mOuterSectorRadius = a.getInteger(R.styleable.SpeedometerView_outerSectorRadius, Color.BLACK);
+        mMaxSpeed = a.getInteger(R.styleable.SpeedometerView_maxSpeed, 90);
+        mEnergyIcon = a.getInteger(R.styleable.SpeedometerView_energyIcon, Color.BLACK);
+        mEnergyLine = a.getInteger(R.styleable.SpeedometerView_energyLine, Color.BLACK);
 
         a.recycle();
 
@@ -144,10 +132,8 @@ public class SpeedometerView extends View {
 
         mPaint = new Paint();
         mFuelPaint = new Paint();
-
         mTextRect = new Rect();
-
-        mColorFilter = new ColorMatrixColorFilter(mMatrixFilter);
+        mBitmapMatrix = new Matrix();
 
         start();
     }
@@ -197,9 +183,8 @@ public class SpeedometerView extends View {
         contentWidth = getWidth() - paddingLeft - paddingRight;
         contentHeight = getHeight() - paddingTop - paddingBottom;
 
-        centerX = contentWidth/2;
-        centerY = contentHeight/2;
-        radius = (float)contentHeight;
+        generalRadius = Math.min(contentWidth/2, contentHeight) - Math.max(Math.max(paddingLeft, paddingRight),
+                Math.max(paddingTop, paddingBottom));
 
         drawBackground(canvas);
         drawArrow(canvas);
@@ -207,74 +192,86 @@ public class SpeedometerView extends View {
 
     private void drawBackground(Canvas canvas){
 
-        //      draw background circle
-        mPaint.setColor(mBackgroundColor);
-        mPaint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(paddingLeft + contentWidth/2, paddingTop + contentHeight, contentHeight, mPaint);
+        drawBackgroundCircle(canvas);
 
-        //      draw  arrow circle
-        mPaint.setColor(Color.BLACK);
-        mPaint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(paddingLeft + contentWidth/2,paddingTop + contentHeight,
-                contentHeight*(float) ARROW_CIRCLE_INDEX, mPaint);
+        drawArrowCircle(canvas);
+
+        drawBorderCircle(canvas);
 
         drawInnerCircle(canvas);
+
         drawFuelLevel(canvas);
 
+        drawScale(canvas);
+    }
+
+    private void drawBackgroundCircle(Canvas canvas){
+        mPaint.setColor(mBackgroundColor);
+        mPaint.setStyle(Paint.Style.FILL);
+
+        mBackgroundCircleRec = new RectF(paddingLeft + contentWidth/2 - generalRadius,
+                paddingTop + (contentHeight - generalRadius),
+                contentWidth/2 + generalRadius + paddingRight,
+                generalRadius *2 + paddingBottom);
+
+        canvas.drawArc(mBackgroundCircleRec, -180, 180, false, mPaint);
+    }
+
+    private void drawBorderCircle(Canvas canvas){
         mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(SCALE_HEIGHT);
-        canvas.drawCircle(paddingLeft + contentWidth/2,paddingTop+ contentHeight, contentHeight, mPaint);
+        mPaint.setStrokeWidth(generalRadius*BORDER_HEIGHT);
+        canvas.drawArc(mBackgroundCircleRec, -180, 180, false, mPaint);
+    }
 
-        //      draw scale
-        RectF rectF = new RectF(paddingLeft + contentWidth/2 - contentHeight + contentHeight*SCALES_WIDTH/2,
-                paddingTop + contentHeight*SCALES_WIDTH/2 ,
-                contentWidth/2 + contentHeight - contentHeight*SCALES_WIDTH/2 + paddingRight,
-                contentHeight*2 - contentHeight*SCALES_WIDTH/2 + paddingBottom);
-        mPaint.setStrokeWidth(contentHeight*SCALES_WIDTH);
+    private void drawArrowCircle(Canvas canvas){
+        mPaint.setColor(Color.BLACK);
+        mPaint.setStyle(Paint.Style.FILL);
+        canvas.drawCircle(getWidth()/2,paddingTop + contentHeight,
+                generalRadius * ARROW_CIRCLE_INDEX, mPaint);
+    }
 
-        Path p = new Path();
+    private void drawScale(Canvas canvas){
+        mPaint.setColor(Color.BLACK);
 
+        mScaleCircleRec = new RectF(paddingLeft + contentWidth/2 - generalRadius + generalRadius *SCALES_WIDTH/2,
+                paddingTop + (contentHeight - generalRadius) + generalRadius *SCALES_WIDTH/2 ,
+                contentWidth/2 + generalRadius - generalRadius *SCALES_WIDTH/2 + paddingRight,
+                generalRadius *2 - generalRadius *SCALES_WIDTH/2 + paddingBottom);
+        mPaint.setStrokeWidth(generalRadius *SCALES_WIDTH);
+
+        mScalePath = new Path();
         int scaleCount = mMaxSpeed/10;
         for(int i = mMaxSpeed, c = 0; i > 0; i -= 10, c++){
-            p.addArc(rectF,-170 + ((180/scaleCount)*c),1f);
+            mScalePath.addArc(mScaleCircleRec,-170 + ((180/scaleCount)*c),1f);
         }
 
-        canvas.drawPath(p, mPaint);
+        canvas.drawPath(mScalePath, mPaint);
 
         mPaint.setStrokeWidth(2);
         mPaint.setStyle(Paint.Style.FILL);
-        mPaint.setTextSize(contentHeight*TEXT_SIZE);
+        mPaint.setTextSize(generalRadius *TEXT_SIZE);
         canvas.save(Canvas.MATRIX_SAVE_FLAG);
 
-        mPaint.setStrokeWidth(contentHeight*OUTER_CIRCLE_WIDTH);
-        mPaint.setColor(Color.BLACK);
+        mPaint.setStrokeWidth(generalRadius *OUTER_CIRCLE_WIDTH);
         PointF pointF = new PointF();
-        float angle = 10;
+        float angle;
         float step = 180/(mMaxSpeed/10);
         for(int i = 0; i < mMaxSpeed/10; ++i){
 
             angle = 10 + i*step;
-            calculateCirclePoint(angle, contentHeight*SCALE_RADIUS_INDEX, pointF);
-            drawText(canvas, String.valueOf((int)10*i + 10), pointF.x, pointF.y, mPaint);
+            calculateCirclePoint(angle, generalRadius *SCALE_RADIUS_INDEX, pointF);
+            drawText(canvas, String.valueOf(10 * i + 10), pointF.x, pointF.y, mPaint);
         }
     }
 
     private void drawFuelLevel(Canvas canvas){
-
-//        draw fuel picture
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.fuel_ico);
 
-        Matrix matrix = new Matrix();
-        matrix = new Matrix();
-
-        Log.d("BBB", "is = " + String.valueOf(contentHeight));
-
-
-        RectF fuelIcoRec = new RectF(paddingLeft + contentWidth/2 - contentHeight*0.2f,
-                paddingTop + contentHeight*0.3f,
-                paddingLeft + contentWidth/2, paddingTop + contentHeight*0.5f);
-        matrix.mapRect(fuelIcoRec);
+        RectF fuelIcoRec = new RectF(paddingLeft + contentWidth/2 - generalRadius *0.2f,
+                paddingTop + generalRadius *0.3f,
+                paddingLeft + contentWidth/2, paddingTop + generalRadius *0.5f);
+        mBitmapMatrix.mapRect(fuelIcoRec);
 
         mMatrixFilter = new float[]{
                 0, 0, 0, 0, (1 - mCurrentFuelLevel/100)*255,
@@ -288,10 +285,10 @@ public class SpeedometerView extends View {
 
         canvas.drawBitmap(bitmap, null, fuelIcoRec, mFuelPaint);
 
-        Rect fuelLevelRec = new Rect(paddingLeft + contentWidth/2,paddingTop + (int)(contentHeight*0.37f),
-                paddingLeft + (int)(contentWidth/2) + (int)(contentHeight*0.3f*(mCurrentFuelLevel/mMaxFuelLevel)),
-                paddingLeft + (int)(contentHeight*0.42f));
-        if((float)mCurrentFuelLevel/mMaxFuelLevel < (float)1/3 ){
+        Rect fuelLevelRec = new Rect(paddingLeft + contentWidth/2,paddingTop + (int)(generalRadius *0.37f),
+                paddingLeft + (int)(contentWidth/2) + (int)(generalRadius *0.3f*(mCurrentFuelLevel/mMaxFuelLevel)),
+                (int)(generalRadius *0.42f));
+        if(mCurrentFuelLevel/mMaxFuelLevel < (float)1/3 ){
 
             if(mAlphaLevel < 35){
                  mAlphaR = 30;
@@ -313,46 +310,45 @@ public class SpeedometerView extends View {
     private void drawArrow(Canvas canvas){
 
         canvas.save();
-        canvas.rotate(-90 + ((float)180/mMaxSpeed)*mCurrentSpeed, paddingLeft + contentWidth/2, paddingTop + contentHeight);
+        canvas.rotate(-90 + ((float)180/mMaxSpeed)*mCurrentSpeed, paddingLeft + contentWidth/2, paddingTop + generalRadius);
 
         mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.FILL);
 
         Path arrow = new Path();
-        arrow.moveTo(paddingLeft + contentWidth/2 - contentHeight*ARROW_WEIGHT_INDEX, paddingTop + contentHeight);
-        arrow.lineTo(paddingLeft + contentWidth/2 - contentHeight*ARROW_WEIGHT_INDEX*ARROW_WEIGHT2_INDEX,
-                paddingTop +  contentHeight*ARROW_HEIGHT_INDEX);
-        arrow.lineTo(paddingLeft + contentWidth/2 + contentHeight*ARROW_WEIGHT_INDEX*ARROW_WEIGHT2_INDEX,
-                paddingTop + contentHeight*ARROW_HEIGHT_INDEX);
-        arrow.lineTo(paddingLeft + contentWidth/2 + contentHeight*ARROW_WEIGHT_INDEX,paddingTop + contentHeight);
+        arrow.moveTo(paddingLeft + contentWidth/2 - generalRadius *ARROW_WEIGHT_INDEX, paddingTop + generalRadius);
+        arrow.lineTo(paddingLeft + contentWidth/2 - generalRadius *ARROW_WEIGHT_INDEX*ARROW_WEIGHT2_INDEX,
+                paddingTop +  generalRadius *ARROW_HEIGHT_INDEX);
+        arrow.lineTo(paddingLeft + contentWidth/2 + generalRadius *ARROW_WEIGHT_INDEX*ARROW_WEIGHT2_INDEX,
+                paddingTop + generalRadius *ARROW_HEIGHT_INDEX);
+        arrow.lineTo(paddingLeft + contentWidth/2 + generalRadius *ARROW_WEIGHT_INDEX,paddingTop + generalRadius);
         arrow.close();
 
         canvas.drawPath(arrow, mPaint);
-
         canvas.restore();
     }
 
     private void drawInnerCircle(Canvas canvas){
-        //      draw inner stroke circle for arrow
         mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(contentHeight*INNER_CIRCLE_WIDTH);
-        canvas.drawCircle(paddingLeft + contentWidth/2,paddingTop+ contentHeight, contentHeight*INNER_CIRCLE_RADIUS, mPaint);
-        drawInnerCircle1(canvas);
+        mPaint.setStrokeWidth(generalRadius *INNER_CIRCLE_WIDTH);
+
+        innerCircleRec = new RectF(paddingLeft + contentWidth/2 - generalRadius*INNER_CIRCLE_RADIUS,
+                paddingTop + generalRadius - generalRadius *INNER_CIRCLE_RADIUS,
+                contentWidth/2 + generalRadius *INNER_CIRCLE_RADIUS + paddingRight,
+                generalRadius + generalRadius *INNER_CIRCLE_RADIUS + paddingBottom);
+
+        canvas.drawArc(innerCircleRec, -180, 180, false, mPaint);
+
+        drawInnerSpeedCircle(canvas);
     }
 
-    private void drawInnerCircle1(Canvas canvas){
-        //      draw inner stroke circle for arrow
+    private void drawInnerSpeedCircle(Canvas canvas){
         mPaint.setColor(Color.RED);
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(contentHeight*INNER_CIRCLE_WIDTH);
+        mPaint.setStrokeWidth(generalRadius *INNER_CIRCLE_WIDTH);
 
-        RectF rectF = new RectF(paddingLeft + contentWidth/2 - contentHeight*INNER_CIRCLE_RADIUS,
-                paddingTop + contentHeight - contentHeight*INNER_CIRCLE_RADIUS,
-                contentWidth/2 + contentHeight*INNER_CIRCLE_RADIUS + paddingRight,
-                contentHeight + contentHeight*INNER_CIRCLE_RADIUS + paddingBottom);
-
-        canvas.drawArc(rectF, ((float)180/mMaxSpeed)*mCurrentSpeed, 180, false, mPaint);
+        canvas.drawArc(innerCircleRec, - 180, ((float)180/mMaxSpeed)*mCurrentSpeed, false, mPaint);
     }
 
     private float changeSpeed(float newSpeedValue){
@@ -411,15 +407,11 @@ public class SpeedometerView extends View {
     private void calculateCirclePoint(float angle, float radius, PointF point) {
 
         point.set((float) (paddingLeft + contentWidth/2 - radius * Math.cos(angle / 180 * Math.PI)),
-                (float) (paddingTop + contentHeight - radius * Math.sin(angle / 180 * Math.PI)));
+                (float) (paddingTop + generalRadius - radius * Math.sin(angle / 180 * Math.PI)));
     }
 
     public void setFuelLevel(int newLevel){
         mCurrentFuelLevel = newLevel;
-    }
-
-    public void setFuelConsumptionPerSecond(float newConsumption){
-        mFuelConsumption = newConsumption;
     }
 
     public int getmBackgroundColor() {
@@ -550,7 +542,6 @@ public class SpeedometerView extends View {
         this.mTextHeight = mTextHeight;
     }
 
-
     public float getmCurrentSpeed() {
         return mCurrentSpeed;
     }
@@ -599,10 +590,9 @@ public class SpeedometerView extends View {
         this.mMaxFuelLevel = mMaxFuelLevel;
     }
 
+
     interface SpeedChangeListener {
 
         void onSpeedChange(float newSpeedValue);
-
-        void showInfoMessage(String string);
     }
 }
