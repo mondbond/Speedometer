@@ -6,11 +6,11 @@
     android:layout_height="match_parent"
     tools:context="com.example.mond.speedometer.MainActivity">
 
-
     <com.example.mond.speedometer.SpeedometerView
         android:id="@+id/speedometer"
         android:layout_width="500dp"
         android:layout_height="105dp"
+        android:padding="20dp"
         app:backgroundColor="@color/colorAccent" />
 
     <Button

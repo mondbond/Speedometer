@@ -5,8 +5,9 @@
     android:background="@color/colorAccent">
 
     <com.example.mond.speedometer.SpeedometerView
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_width="400dp"
+        android:padding="20dp"
+        android:layout_height="400dp"
         android:paddingBottom="40dp"
         android:paddingLeft="20dp" />
 
