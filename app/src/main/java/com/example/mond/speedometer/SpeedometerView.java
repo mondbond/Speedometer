@@ -18,6 +18,7 @@ import android.os.Handler;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 
+import android.util.Log;
 import android.view.View;
 
 public class SpeedometerView extends View {
@@ -209,12 +210,13 @@ public class SpeedometerView extends View {
         //      draw background circle
         mPaint.setColor(mBackgroundColor);
         mPaint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(contentWidth/2, contentHeight, contentHeight, mPaint);
+        canvas.drawCircle(paddingLeft + contentWidth/2, paddingTop + contentHeight, contentHeight, mPaint);
 
         //      draw  arrow circle
         mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(contentWidth/2, contentHeight, contentHeight*(float) ARROW_CIRCLE_INDEX, mPaint);
+        canvas.drawCircle(paddingLeft + contentWidth/2,paddingTop + contentHeight,
+                contentHeight*(float) ARROW_CIRCLE_INDEX, mPaint);
 
         drawInnerCircle(canvas);
         drawFuelLevel(canvas);
@@ -222,11 +224,13 @@ public class SpeedometerView extends View {
         mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeWidth(SCALE_HEIGHT);
-        canvas.drawCircle(contentWidth/2, contentHeight, contentHeight, mPaint);
+        canvas.drawCircle(paddingLeft + contentWidth/2,paddingTop+ contentHeight, contentHeight, mPaint);
 
         //      draw scale
-        RectF rectF = new RectF(contentWidth/2 - contentHeight + contentHeight*SCALES_WIDTH/2, contentHeight*SCALES_WIDTH/2 ,
-                contentWidth/2 + contentHeight - contentHeight*SCALES_WIDTH/2,  contentHeight*2 - contentHeight*SCALES_WIDTH/2);
+        RectF rectF = new RectF(paddingLeft + contentWidth/2 - contentHeight + contentHeight*SCALES_WIDTH/2,
+                paddingTop + contentHeight*SCALES_WIDTH/2 ,
+                contentWidth/2 + contentHeight - contentHeight*SCALES_WIDTH/2 + paddingRight,
+                contentHeight*2 - contentHeight*SCALES_WIDTH/2 + paddingBottom);
         mPaint.setStrokeWidth(contentHeight*SCALES_WIDTH);
 
         Path p = new Path();
@@ -264,23 +268,29 @@ public class SpeedometerView extends View {
         Matrix matrix = new Matrix();
         matrix = new Matrix();
 
-        RectF rectF = new RectF(contentWidth/2 - contentHeight*0.2f, contentHeight*0.3f,
-                contentWidth/2, contentHeight*0.5f);
-        matrix.mapRect(rectF);
+        Log.d("BBB", "is = " + String.valueOf(contentHeight));
+
+
+        RectF fuelIcoRec = new RectF(paddingLeft + contentWidth/2 - contentHeight*0.2f,
+                paddingTop + contentHeight*0.3f,
+                paddingLeft + contentWidth/2, paddingTop + contentHeight*0.5f);
+        matrix.mapRect(fuelIcoRec);
 
         mMatrixFilter = new float[]{
                 0, 0, 0, 0, (1 - mCurrentFuelLevel/100)*255,
                 0, 0, 0, 0, mCurrentFuelLevel/100*255,
                 0, 0, 0, 0, 0,
-                0, 0, 0, 1, 0};
+                0, 0, 0, 1, 0
+        };
 
         mFuelPaint.setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(mMatrixFilter)));
         mFuelPaint.setStyle(Paint.Style.FILL);
 
-        canvas.drawBitmap(bitmap, null, rectF, mFuelPaint);
+        canvas.drawBitmap(bitmap, null, fuelIcoRec, mFuelPaint);
 
-        Rect fuelLevel = new Rect(contentWidth/2, (int)(contentHeight*0.37f),
-                (int)(contentWidth/2) + (int)(contentHeight*0.3f*(mCurrentFuelLevel/mMaxFuelLevel)), (int)(contentHeight*0.42f));
+        Rect fuelLevelRec = new Rect(paddingLeft + contentWidth/2,paddingTop + (int)(contentHeight*0.37f),
+                paddingLeft + (int)(contentWidth/2) + (int)(contentHeight*0.3f*(mCurrentFuelLevel/mMaxFuelLevel)),
+                paddingLeft + (int)(contentHeight*0.42f));
         if((float)mCurrentFuelLevel/mMaxFuelLevel < (float)1/3 ){
 
             if(mAlphaLevel < 35){
@@ -297,22 +307,24 @@ public class SpeedometerView extends View {
             mFuelPaint.setAlpha(mAlphaLevel);
         }
 
-        canvas.drawRect(fuelLevel, mFuelPaint);
+        canvas.drawRect(fuelLevelRec, mFuelPaint);
     }
 
     private void drawArrow(Canvas canvas){
 
         canvas.save();
-        canvas.rotate(-90 + ((float)180/mMaxSpeed)*mCurrentSpeed, contentWidth/2, contentHeight);
+        canvas.rotate(-90 + ((float)180/mMaxSpeed)*mCurrentSpeed, paddingLeft + contentWidth/2, paddingTop + contentHeight);
 
         mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.FILL);
 
         Path arrow = new Path();
-        arrow.moveTo(contentWidth/2 - contentHeight*ARROW_WEIGHT_INDEX, contentHeight);
-        arrow.lineTo(contentWidth/2 - contentHeight*ARROW_WEIGHT_INDEX*ARROW_WEIGHT2_INDEX, contentHeight*ARROW_HEIGHT_INDEX);
-        arrow.lineTo(contentWidth/2 + contentHeight*ARROW_WEIGHT_INDEX*ARROW_WEIGHT2_INDEX, contentHeight*ARROW_HEIGHT_INDEX);
-        arrow.lineTo(contentWidth/2 + contentHeight*ARROW_WEIGHT_INDEX, contentHeight);
+        arrow.moveTo(paddingLeft + contentWidth/2 - contentHeight*ARROW_WEIGHT_INDEX, paddingTop + contentHeight);
+        arrow.lineTo(paddingLeft + contentWidth/2 - contentHeight*ARROW_WEIGHT_INDEX*ARROW_WEIGHT2_INDEX,
+                paddingTop +  contentHeight*ARROW_HEIGHT_INDEX);
+        arrow.lineTo(paddingLeft + contentWidth/2 + contentHeight*ARROW_WEIGHT_INDEX*ARROW_WEIGHT2_INDEX,
+                paddingTop + contentHeight*ARROW_HEIGHT_INDEX);
+        arrow.lineTo(paddingLeft + contentWidth/2 + contentHeight*ARROW_WEIGHT_INDEX,paddingTop + contentHeight);
         arrow.close();
 
         canvas.drawPath(arrow, mPaint);
@@ -325,7 +337,7 @@ public class SpeedometerView extends View {
         mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeWidth(contentHeight*INNER_CIRCLE_WIDTH);
-        canvas.drawCircle(contentWidth/2, contentHeight, contentHeight*INNER_CIRCLE_RADIUS, mPaint);
+        canvas.drawCircle(paddingLeft + contentWidth/2,paddingTop+ contentHeight, contentHeight*INNER_CIRCLE_RADIUS, mPaint);
         drawInnerCircle1(canvas);
     }
 
@@ -335,8 +347,10 @@ public class SpeedometerView extends View {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeWidth(contentHeight*INNER_CIRCLE_WIDTH);
 
-        RectF rectF = new RectF(contentWidth/2 - contentHeight*INNER_CIRCLE_RADIUS,contentHeight - contentHeight*INNER_CIRCLE_RADIUS,
-                contentWidth/2 + contentHeight*INNER_CIRCLE_RADIUS, contentHeight + contentHeight*INNER_CIRCLE_RADIUS);
+        RectF rectF = new RectF(paddingLeft + contentWidth/2 - contentHeight*INNER_CIRCLE_RADIUS,
+                paddingTop + contentHeight - contentHeight*INNER_CIRCLE_RADIUS,
+                contentWidth/2 + contentHeight*INNER_CIRCLE_RADIUS + paddingRight,
+                contentHeight + contentHeight*INNER_CIRCLE_RADIUS + paddingBottom);
 
         canvas.drawArc(rectF, ((float)180/mMaxSpeed)*mCurrentSpeed, 180, false, mPaint);
     }
@@ -396,8 +410,8 @@ public class SpeedometerView extends View {
 
     private void calculateCirclePoint(float angle, float radius, PointF point) {
 
-        point.set((float) (contentWidth/2 - radius * Math.cos(angle / 180 * Math.PI)),
-                (float) (contentHeight - radius * Math.sin(angle / 180 * Math.PI)));
+        point.set((float) (paddingLeft + contentWidth/2 - radius * Math.cos(angle / 180 * Math.PI)),
+                (float) (paddingTop + contentHeight - radius * Math.sin(angle / 180 * Math.PI)));
     }
 
     public void setFuelLevel(int newLevel){
