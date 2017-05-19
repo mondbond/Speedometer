@@ -9,8 +9,8 @@
 
     <com.example.mond.speedometer.SpeedometerView
         android:id="@+id/speedometer"
-        android:layout_width="300dp"
-        android:layout_height="105dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         app:backgroundColor="@color/colorAccent" />
 
     <Button
