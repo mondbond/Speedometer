@@ -44,7 +44,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="30sp"
-        android:text="TextView"
+        android:text="0"
         android:layout_above="@+id/stop_btn"
         android:layout_alignLeft="@+id/go_btn"
         android:layout_alignStart="@+id/go_btn"

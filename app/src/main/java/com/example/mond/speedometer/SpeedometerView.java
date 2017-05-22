@@ -34,6 +34,8 @@ public class SpeedometerView extends View {
     private final float ARROW_TOP_WIGHT_INDEX = 0.04f;
     private final float TEXT_SIZE_INDEX = 0.15f;
 
+    private final float MAX_FUEL_LEVEL = 100;
+
     int paddingLeft;
     int paddingTop;
     int paddingRight;
@@ -116,43 +118,43 @@ public class SpeedometerView extends View {
 
     private void init(AttributeSet attrs, int defStyle) {
 
-        final TypedArray a = getContext().obtainStyledAttributes(
+        final TypedArray attr = getContext().obtainStyledAttributes(
                 attrs, R.styleable.SpeedometerView, defStyle, 0);
 
-        mBackgroundColor = a.getColor(R.styleable.SpeedometerView_backgroundColor, Color.GRAY);
-        mSpeedIndicatorColor = a.getColor(R.styleable.SpeedometerView_speedIndicatorColor, Color.BLACK);
-        mBeforeArrowSectorColor = a.getColor(R.styleable.SpeedometerView_beforeArrowSectorColor, Color.RED);
-        mAfterArrowSectorColor = a.getColor(R.styleable.SpeedometerView_afterArrowSectorColor, Color.BLUE);
-        mBorderColor = a.getColor(R.styleable.SpeedometerView_borderColor, Color.BLACK);
-        mArrowColor = a.getColor(R.styleable.SpeedometerView_arrowColor, Color.BLACK);
+        mBackgroundColor = attr.getColor(R.styleable.SpeedometerView_backgroundColor, Color.GRAY);
+        mSpeedIndicatorColor = attr.getColor(R.styleable.SpeedometerView_speedIndicatorColor, Color.BLACK);
+        mBeforeArrowSectorColor = attr.getColor(R.styleable.SpeedometerView_beforeArrowSectorColor, Color.RED);
+        mAfterArrowSectorColor = attr.getColor(R.styleable.SpeedometerView_afterArrowSectorColor, Color.BLUE);
+        mBorderColor = attr.getColor(R.styleable.SpeedometerView_borderColor, Color.BLACK);
+        mArrowColor = attr.getColor(R.styleable.SpeedometerView_arrowColor, Color.BLACK);
 
-        mArrowHeight = (float) a.getInteger(R.styleable.SpeedometerView_arrowHeight, 60)/100;
+        mArrowHeight = (float) attr.getInteger(R.styleable.SpeedometerView_arrowHeight, 60)/100;
         if(mArrowHeight < 0){
             throw new IllegalArgumentException("Argument can not be negative or 0");
         }
 
-        mInnerSectorRadius = ((float) a.getInteger(R.styleable.SpeedometerView_innerSectorRadius, 30)) / 100;
+        mInnerSectorRadius = ((float) attr.getInteger(R.styleable.SpeedometerView_innerSectorRadius, 30)) / 100;
         if(mInnerSectorRadius < 0){
             throw new IllegalArgumentException("Argument can not be negative or 0");
         }
 
-        mOuterSectorRadius = ((float) (a.getInteger(R.styleable.SpeedometerView_outerSectorRadius, 40))) / 100;
+        mOuterSectorRadius = ((float) (attr.getInteger(R.styleable.SpeedometerView_outerSectorRadius, 40))) / 100;
         if(mOuterSectorRadius < 0 || mOuterSectorRadius < mInnerSectorRadius){
             throw new IllegalArgumentException("Argument can not be negative or 0 and must be bigger" +
                     " then inner sector radius");
         }
 
-        mMaxSpeed = a.getInteger(R.styleable.SpeedometerView_maxSpeed, 90);
+        mMaxSpeed = attr.getInteger(R.styleable.SpeedometerView_maxSpeed, 90);
         if(mMaxSpeed < 60 || mMaxSpeed%10 != 0){
             throw new IllegalArgumentException("Argument can not be less then 60 and must be" +
                     " multiple to 10");
         }
 
-        mSpeedAccelerationIndex = a.getFloat(R.styleable.SpeedometerView_speedAccelerationIndex, 50) / 10;
-        mSpeedOnNeutralIndex = a.getFloat(R.styleable.SpeedometerView_speedOnNeutralIndex, 2) / 10;
-        mSpeedFuelConsumptionIndex = a.getFloat(R.styleable.SpeedometerView_speedFuelConsumptionIndex, 5) / 10;
+        mSpeedAccelerationIndex = attr.getFloat(R.styleable.SpeedometerView_speedAccelerationIndex, 50) / 10;
+        mSpeedOnNeutralIndex = attr.getFloat(R.styleable.SpeedometerView_speedOnNeutralIndex, 2) / 10;
+        mSpeedFuelConsumptionIndex = attr.getFloat(R.styleable.SpeedometerView_speedFuelConsumptionIndex, 5) / 10;
 
-        a.recycle();
+        attr.recycle();
 
         mTextPaint = new TextPaint();
         mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
@@ -240,6 +242,8 @@ public class SpeedometerView extends View {
 
         drawScale(canvas);
 
+        drawSpeedIndicator(canvas);
+
         drawArrow(canvas);
     }
 
@@ -285,7 +289,9 @@ public class SpeedometerView extends View {
         }
 
         canvas.drawPath(mScalePath, mPaint);
+    }
 
+    private void drawSpeedIndicator(Canvas canvas){
         mPaint.setColor(mSpeedIndicatorColor);
         mPaint.setStrokeWidth(2);
         mPaint.setStyle(Paint.Style.FILL);
@@ -389,7 +395,7 @@ public class SpeedometerView extends View {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeWidth(mInnerCircleWidth);
 
-        canvas.drawArc(mInnerCircleRec, - 180, ((float)180/mMaxSpeed)*mCurrentSpeed, false, mPaint);
+        canvas.drawArc(mInnerCircleRec, - 180, ((float)180 / mMaxSpeed) * mCurrentSpeed, false, mPaint);
     }
 
     private float changeSpeed(float newSpeedValue){
@@ -433,7 +439,7 @@ public class SpeedometerView extends View {
     }
 
     private void changeFuelLevel(){
-        if(mCurrentFuelLevel != 0 && mCurrentFuelLevel <= 100){
+        if(mCurrentFuelLevel != 0 && mCurrentFuelLevel <= MAX_FUEL_LEVEL){
             mCurrentFuelLevel -= mSpeedFuelConsumptionIndex;
         }else if(mCurrentFuelLevel <= 0 && go){
             go = false;
@@ -595,6 +601,10 @@ public class SpeedometerView extends View {
 
     public void setCurrentFuelLevel(int newCurrentFuelLevel){
         mCurrentFuelLevel = newCurrentFuelLevel;
+    }
+
+    public void setFuelMaxLevel(){
+        mCurrentFuelLevel = MAX_FUEL_LEVEL;
     }
 
 
