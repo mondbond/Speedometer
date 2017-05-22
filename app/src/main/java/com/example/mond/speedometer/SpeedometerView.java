@@ -30,8 +30,8 @@ public class SpeedometerView extends View {
     private final float BORDER_HEIGHT = 0.04F;
     private final float SCALES_WIDTH = 0.1f;
     private final float ARROW_CIRCLE_INDEX = 0.14f;
-    private final float ARROW_WEIGHT_INDEX = 0.1f;
-    private final float ARROW_WEIGHT2_INDEX = 0.05f;
+    private final float ARROW_WIGHT_INDEX = 0.1f;
+    private final float ARROW_TOP_WIGHT_INDEX = 0.04f;
     private final float TEXT_SIZE = 0.15f;
 
     int paddingLeft;
@@ -223,6 +223,7 @@ public class SpeedometerView extends View {
         radius = Math.min(contentWidth / 2, contentHeight);
 
         mInnerCircleWidth = radius * (mOuterSectorRadius - mInnerSectorRadius);
+
         setMeasuredDimension(width, height);
     }
 
@@ -362,10 +363,10 @@ public class SpeedometerView extends View {
         mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.FILL);
 
-        mArrowPath.moveTo(centerX - radius * ARROW_WEIGHT_INDEX, centerY);
-        mArrowPath.lineTo(centerX - radius * ARROW_WEIGHT2_INDEX, centerY - radius * mArrowHeight);
-        mArrowPath.lineTo(centerX + radius * ARROW_WEIGHT2_INDEX, centerY - radius * mArrowHeight);
-        mArrowPath.lineTo(centerX + radius * ARROW_WEIGHT_INDEX, centerY);
+        mArrowPath.moveTo(centerX - radius * ARROW_WIGHT_INDEX, centerY);
+        mArrowPath.lineTo(centerX - radius * ARROW_TOP_WIGHT_INDEX, centerY - radius * mArrowHeight);
+        mArrowPath.lineTo(centerX + radius * ARROW_TOP_WIGHT_INDEX, centerY - radius * mArrowHeight);
+        mArrowPath.lineTo(centerX + radius * ARROW_WIGHT_INDEX, centerY);
         mArrowPath.close();
 
         canvas.drawPath(mArrowPath, mPaint);
@@ -634,7 +635,6 @@ public class SpeedometerView extends View {
     public void setCurrentFuelLevel(int newCurrentFuelLevel){
         mCurrentFuelLevel = newCurrentFuelLevel;
     }
-
 
 
     interface SpeedChangeListener {
