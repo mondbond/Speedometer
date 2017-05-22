@@ -15,18 +15,18 @@
         app:maxSpeed="100"/>
 
     <Button
-        android:id="@+id/stopBtn"
+        android:id="@+id/stop_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/stop"
         tools:layout_editor_absoluteX="30dp"
         tools:layout_editor_absoluteY="205dp"
-        android:layout_alignBaseline="@+id/goBtn"
-        android:layout_alignBottom="@+id/goBtn"
+        android:layout_alignBaseline="@+id/go_btn"
+        android:layout_alignBottom="@+id/go_btn"
         android:layout_centerHorizontal="true" />
 
     <Button
-        android:id="@+id/goBtn"
+        android:id="@+id/go_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/go"
@@ -40,14 +40,14 @@
         android:layout_marginTop="58dp" />
 
     <TextView
-        android:id="@+id/speedValue"
+        android:id="@+id/speed_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="30sp"
         android:text="TextView"
-        android:layout_above="@+id/stopBtn"
-        android:layout_alignLeft="@+id/goBtn"
-        android:layout_alignStart="@+id/goBtn"
+        android:layout_above="@+id/stop_btn"
+        android:layout_alignLeft="@+id/go_btn"
+        android:layout_alignStart="@+id/go_btn"
         android:layout_marginLeft="44dp"
         android:layout_marginStart="44dp" />
 </RelativeLayout>

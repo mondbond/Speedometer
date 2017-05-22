@@ -2,12 +2,10 @@ package com.example.mond.speedometer;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity implements SpeedometerView.SpeedChangeListener {
 
@@ -21,10 +19,10 @@ public class MainActivity extends AppCompatActivity implements SpeedometerView.S
 
         speedometer = (SpeedometerView) findViewById(R.id.speedometer);
         speedometer.setListener(this);
-        speedValue = (TextView) findViewById(R.id.speedValue);
+        speedValue = (TextView) findViewById(R.id.speed_value);
 
-        Button stop = (Button) findViewById(R.id.stopBtn);
-        Button go = (Button) findViewById(R.id.goBtn);
+        Button stop = (Button) findViewById(R.id.stop_btn);
+        Button go = (Button) findViewById(R.id.go_btn);
 
         go.setOnTouchListener(new View.OnTouchListener() {
             @Override
