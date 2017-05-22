@@ -454,6 +454,7 @@ public class SpeedometerView extends View {
         return (1 - mCurrentSpeed/mMaxSpeed)*baseAcceleration;
     }
 
+    // TODO: 22.05.17 remake it to use matrix rotation instead it much easier for calculation
     private void calculateCirclePoint(float angle, float radius, PointF point) {
         point.set((float) (centerX - radius * Math.cos(angle / 180 * Math.PI)),
                 (float) (centerY - radius * Math.sin(angle / 180 * Math.PI)));
