@@ -151,8 +151,19 @@ public class SpeedometerView extends View {
         }
 
         mSpeedAccelerationIndex = attr.getFloat(R.styleable.SpeedometerView_speedAccelerationIndex, 50) / 10;
+        if(mSpeedAccelerationIndex < 0){
+            throw new IllegalArgumentException("Argument can not be negative");
+        }
+
         mSpeedOnNeutralIndex = attr.getFloat(R.styleable.SpeedometerView_speedOnNeutralIndex, 2) / 10;
+        if(mSpeedOnNeutralIndex < 0){
+            throw new IllegalArgumentException("Argument can not be negative");
+        }
+
         mSpeedFuelConsumptionIndex = attr.getFloat(R.styleable.SpeedometerView_speedFuelConsumptionIndex, 5) / 10;
+        if(mSpeedFuelConsumptionIndex < 0){
+            throw new IllegalArgumentException("Argument can not be negative");
+        }
 
         attr.recycle();
 
@@ -515,12 +526,28 @@ public class SpeedometerView extends View {
         this.mArrowColor = mArrowColor;
     }
 
+    public float getArrowHeight() {
+        return mArrowHeight;
+    }
+
+    public void setArrowHeight(float mArrowHeight) {
+        if(mArrowHeight < 0){
+            throw new IllegalArgumentException("Argument can not be negative or 0");
+        }else {
+            this.mArrowHeight = mArrowHeight;
+        }
+    }
+
     public float getInnerSectorRadius() {
         return mInnerSectorRadius;
     }
 
     public void setInnerSectorRadius(int mInnerSectorRadius) {
-        this.mInnerSectorRadius = mInnerSectorRadius;
+        if(mInnerSectorRadius < 0){
+            throw new IllegalArgumentException("Argument can not be negative or 0");
+        }else {
+            this.mInnerSectorRadius = mInnerSectorRadius;
+        }
     }
 
     public float getOuterSectorRadius() {
@@ -528,7 +555,12 @@ public class SpeedometerView extends View {
     }
 
     public void setOuterSectorRadius(int mOuterSectorRadius) {
-        this.mOuterSectorRadius = mOuterSectorRadius;
+        if(mOuterSectorRadius < 0 || mOuterSectorRadius < mInnerSectorRadius){
+            throw new IllegalArgumentException("Argument can not be negative or 0 and must be bigger" +
+                    " then inner sector radius");
+        }else {
+            this.mOuterSectorRadius = mOuterSectorRadius;
+        }
     }
 
     public int getMaxSpeed() {
@@ -536,7 +568,12 @@ public class SpeedometerView extends View {
     }
 
     public void setMaxSpeed(int mMaxSpeed) {
-        this.mMaxSpeed = mMaxSpeed;
+        if(mMaxSpeed < 60 || mMaxSpeed%10 != 0){
+            throw new IllegalArgumentException("Argument can not be less then 60 and must be" +
+                    " multiple to 10");
+        }else {
+            this.mMaxSpeed = mMaxSpeed;
+        }
     }
 
     public Paint getPaint() {
@@ -591,8 +628,12 @@ public class SpeedometerView extends View {
         return mCurrentFuelLevel;
     }
 
-    public void setCurrentFuelLevel(float mCurrentFuelLevel) {
-        this.mCurrentFuelLevel = mCurrentFuelLevel;
+    public void setCurrentFuelLevel(float currentFuelLevel) {
+        if( currentFuelLevel < 0 || currentFuelLevel > 100){
+            throw new IllegalArgumentException("Argument can not be negative or more then 100");
+        }else {
+            this.mCurrentFuelLevel = currentFuelLevel;
+        }
     }
 
     public float getMaxFuelLevel() {
@@ -605,6 +646,42 @@ public class SpeedometerView extends View {
 
     public void setCurrentFuelLevel(int newCurrentFuelLevel){
         mCurrentFuelLevel = newCurrentFuelLevel;
+    }
+
+    public float getSpeedAccelerationIndex() {
+        return mSpeedAccelerationIndex;
+    }
+
+    public void setSpeedAccelerationIndex(float mSpeedAccelerationIndex) {
+        if(mSpeedAccelerationIndex < 0){
+            throw new IllegalArgumentException("Argument can not be negative");
+        }else {
+            this.mSpeedAccelerationIndex = mSpeedAccelerationIndex;
+        }
+    }
+
+    public float getSpeedOnNeutralIndex() {
+        return mSpeedOnNeutralIndex;
+    }
+
+    public void setSpeedOnNeutralIndex(float mSpeedOnNeutralIndex) {
+        if(mSpeedAccelerationIndex < 0){
+            throw new IllegalArgumentException("Argument can not be negative");
+        }else {
+            this.mSpeedOnNeutralIndex = mSpeedOnNeutralIndex;
+        }
+    }
+
+    public float getSpeedFuelConsumptionIndex() {
+        return mSpeedFuelConsumptionIndex;
+    }
+
+    public void setSpeedFuelConsumptionIndex(float mSpeedFuelConsumptionIndex) {
+        if(mSpeedFuelConsumptionIndex < 0){
+            throw new IllegalArgumentException("Argument can not be negative");
+        } else {
+            this.mSpeedFuelConsumptionIndex = mSpeedFuelConsumptionIndex;
+        }
     }
 
     public void setFuelMaxLevel(){
