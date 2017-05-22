@@ -20,7 +20,6 @@ import android.os.Handler;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
@@ -177,8 +176,6 @@ public class SpeedometerView extends View {
         mAlphaAnimator.setRepeatCount(ValueAnimator.INFINITE);
         mAlphaAnimator.setRepeatMode(ValueAnimator.REVERSE);
 
-        mInnerCircleWidth = radius * (mOuterSectorRadius - mInnerSectorRadius);
-
         start();
     }
 
@@ -225,6 +222,7 @@ public class SpeedometerView extends View {
 
         radius = Math.min(contentWidth / 2, contentHeight);
 
+        mInnerCircleWidth = radius * (mOuterSectorRadius - mInnerSectorRadius);
         setMeasuredDimension(width, height);
     }
 
@@ -332,9 +330,9 @@ public class SpeedometerView extends View {
 
         mFuelLevel = new Rect(
                 centerX,
-                centerY - radius + (int) (radius * 0.43f),
+                centerY - radius + (int) (radius * 0.44f),
                 centerX + (int ) (radius * 0.3f * (mCurrentFuelLevel / mMaxFuelLevel)),
-                centerY - radius + (int) (radius * 0.45f));
+                centerY - radius + (int) (radius * 0.47f));
 
         mAlphaAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -636,6 +634,7 @@ public class SpeedometerView extends View {
     public void setCurrentFuelLevel(int newCurrentFuelLevel){
         mCurrentFuelLevel = newCurrentFuelLevel;
     }
+
 
 
     interface SpeedChangeListener {
