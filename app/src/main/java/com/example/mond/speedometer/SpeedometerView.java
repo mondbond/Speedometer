@@ -35,6 +35,7 @@ public class SpeedometerView extends View {
     private final float TEXT_SIZE_INDEX = 0.15f;
 
     private final float MAX_FUEL_LEVEL = 100;
+    private final float ACCELERATION_INDEX = 4;
 
     int paddingLeft;
     int paddingTop;
@@ -46,7 +47,6 @@ public class SpeedometerView extends View {
 
     int centerX;
     int centerY;
-
     int radius;
 
     private int mBackgroundColor;
@@ -121,7 +121,7 @@ public class SpeedometerView extends View {
         final TypedArray attr = getContext().obtainStyledAttributes(
                 attrs, R.styleable.SpeedometerView, defStyle, 0);
 
-        mBackgroundColor = attr.getColor(R.styleable.SpeedometerView_backgroundColor, Color.GRAY);
+        mBackgroundColor = attr.getColor(R.styleable.SpeedometerView_backgroundColor, Color.WHITE);
         mSpeedIndicatorColor = attr.getColor(R.styleable.SpeedometerView_speedIndicatorColor, Color.BLACK);
         mBeforeArrowSectorColor = attr.getColor(R.styleable.SpeedometerView_beforeArrowSectorColor, Color.RED);
         mAfterArrowSectorColor = attr.getColor(R.styleable.SpeedometerView_afterArrowSectorColor, Color.BLUE);
@@ -420,7 +420,7 @@ public class SpeedometerView extends View {
                 handler.postDelayed(this, 100);
 
                 if (stop) {
-                    changeSpeed(mCurrentSpeed -= calculateAcceleration(4));
+                    changeSpeed(mCurrentSpeed -= calculateAcceleration(ACCELERATION_INDEX));
                 } else if (go && mCurrentFuelLevel > 0) {
                     changeSpeed(mCurrentSpeed += calculateAcceleration(mSpeedAccelerationIndex));
                     changeFuelLevel();
@@ -435,7 +435,11 @@ public class SpeedometerView extends View {
 
     private void drawText(Canvas canvas, String text, float x, float y, Paint paint){
         paint.getTextBounds(text, 0, text.length(), mTextRect);
-        canvas.drawText(text, x - mTextRect.width() / 2f, y + mTextRect.height() / 2f, paint);
+        if(Float.parseFloat(text) >= 100){
+            canvas.drawText(text, x - mTextRect.width() / 2f - 10, y + mTextRect.height() / 2f, paint);
+        }else {
+            canvas.drawText(text, x - mTextRect.width() / 2f, y + mTextRect.height() / 2f, paint);
+        }
     }
 
     private void changeFuelLevel(){
