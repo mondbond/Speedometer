@@ -5,6 +5,7 @@
         <attr name="speedIndicatorColor" format="color|reference" />
         <attr name="beforeArrowSectorColor" format="color|reference" />
         <attr name="afterArrowSectorColor" format="color|reference" />
+        <attr name="arrowHeight" format="integer" />
 
         <attr name="sectorRadius" format="integer" />
         <attr name="borderColor" format="integer" />
@@ -14,5 +15,9 @@
         <attr name="maxSpeed" format="integer" />
         <attr name="energyIcon" format="integer" />
         <attr name="energyLine" format="integer" />
+
+        <attr name="speedAccelerationIndex" format="float" />
+        <attr name="speedOnNeutralIndex" format="float" />
+        <attr name="speedFuelConsumptionIndex" format="float" />
     </declare-styleable>
 </resources>

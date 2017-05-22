@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements SpeedometerView.S
         go.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if(speedometer.getmCurrentFuelLevel() > 0) {
+                if(speedometer.getCurrentFuelLevel() > 0) {
 
                     if (event.getAction() == MotionEvent.ACTION_DOWN) {
                         speedometer.setGo(true);

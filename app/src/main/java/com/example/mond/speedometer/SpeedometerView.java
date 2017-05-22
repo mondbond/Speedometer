@@ -1,5 +1,7 @@
 package com.example.mond.speedometer;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -20,22 +22,17 @@ import android.util.AttributeSet;
 
 import android.util.Log;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 
 public class SpeedometerView extends View {
 
-    private final float INNER_CIRCLE_WIDTH = 0.15f;
-    private final float INNER_CIRCLE_RADIUS = 0.4f;
     private final float OUTER_CIRCLE_WIDTH = 0.05f;
-
-    private final float SCALE_RADIUS_INDEX = 0.8f;
+    private final float SCALE_RADIUS_INDEX = 0.75f;
     private final float BORDER_HEIGHT = 0.04F;
     private final float SCALES_WIDTH = 0.1f;
-
     private final float ARROW_CIRCLE_INDEX = 0.14f;
-    private final float ARROW_WEIGHT_INDEX = 0.08f;
-    private final float ARROW_WEIGHT2_INDEX = 0.4f;
-    private final float ARROW_HEIGHT_INDEX = 0.3f;
-
+    private final float ARROW_WEIGHT_INDEX = 0.1f;
+    private final float ARROW_WEIGHT2_INDEX = 0.05f;
     private final float TEXT_SIZE = 0.15f;
 
     int paddingLeft;
@@ -45,6 +42,9 @@ public class SpeedometerView extends View {
 
     int contentWidth;
     int contentHeight;
+
+    int centerX;
+    int centerY;
 
     int radius = getHeight() - paddingTop - paddingBottom + paddingLeft + paddingRight;
 
@@ -56,25 +56,38 @@ public class SpeedometerView extends View {
     private int mSectorRadius;
     private int mBorderColor;
     private int mArrowColor;
-    private int mInnerSectorRadius;
-    private int mOuterSectorRadius;
+    private float mArrowHeight;
+    private float mInnerSectorRadius;
+    private float mOuterSectorRadius;
     private int mMaxSpeed;
     private int mEnergyIcon;
     private int mEnergyLine;
+
+    private float mSpeedAccelerationIndex;
+    private float mSpeedOnNeutralIndex;
+    private float mSpeedFuelConsumptionIndex;
 
     private float mTextWidth;
     private float mTextHeight;
 
     private RectF mBackgroundCircleRec;
     private Rect mTextRect;
-    private RectF innerCircleRec;
+    private RectF mInnerCircleRec;
+
+    private float mInnerCircleWidth;
+
     private RectF mScaleCircleRec;
+    private RectF mFuelIcoRec;
+    private Rect mFuelLevel;
     private Path mScalePath;
+    private Path mArrowPath;
+    private PointF mScaleTextPoint;
 
     private Matrix mBitmapMatrix;
 
-    private int mAlphaLevel = 255;
-    private int mAlphaR = 10;
+    private ValueAnimator mAlphaAnimator;
+    private boolean mIsAlphaAnimating;
+
     private float[] mMatrixFilter;
 
     private Paint mPaint;
@@ -112,21 +125,41 @@ public class SpeedometerView extends View {
 
         mBackgroundColor = a.getColor(R.styleable.SpeedometerView_backgroundColor, Color.GRAY);
         mSpeedIndicatorColor = a.getColor(R.styleable.SpeedometerView_speedIndicatorColor, Color.BLACK);
-        mBeforeArrowSectorColor = a.getColor(R.styleable.SpeedometerView_beforeArrowSectorColor, Color.BLACK);
-        mAfterArrowSectorColor = a.getColor(R.styleable.SpeedometerView_afterArrowSectorColor, Color.BLACK);
+        mBeforeArrowSectorColor = a.getColor(R.styleable.SpeedometerView_beforeArrowSectorColor, Color.RED);
+        mAfterArrowSectorColor = a.getColor(R.styleable.SpeedometerView_afterArrowSectorColor, Color.BLUE);
         mBorderColor = a.getColor(R.styleable.SpeedometerView_borderColor, Color.BLACK);
         mArrowColor = a.getColor(R.styleable.SpeedometerView_arrowColor, Color.BLACK);
 
-        mSectorRadius = a.getInteger(R.styleable.SpeedometerView_sectorRadius, Color.BLACK);
-        mInnerSectorRadius = a.getInteger(R.styleable.SpeedometerView_innerSectorRadius, Color.BLACK);
-        mOuterSectorRadius = a.getInteger(R.styleable.SpeedometerView_outerSectorRadius, Color.BLACK);
+        mArrowHeight = (float) a.getInteger(R.styleable.SpeedometerView_arrowHeight, 60)/100;
+        if(mArrowHeight < 0){
+            throw new IllegalArgumentException("Argument can not be negative or 0");
+        }
+
+        mInnerSectorRadius = ((float) a.getInteger(R.styleable.SpeedometerView_innerSectorRadius, 30)) / 100;
+        if(mInnerSectorRadius < 0){
+            throw new IllegalArgumentException("Argument can not be negative or 0");
+        }
+
+        mOuterSectorRadius = ((float) (a.getInteger(R.styleable.SpeedometerView_outerSectorRadius, 40))) / 100;
+        if(mOuterSectorRadius < 0 || mOuterSectorRadius < mInnerSectorRadius){
+            throw new IllegalArgumentException("Argument can not be negative or 0 and must be bigger" +
+                    " then inner sector radius");
+        }
+
         mMaxSpeed = a.getInteger(R.styleable.SpeedometerView_maxSpeed, 90);
+        if(mMaxSpeed < 60 || mMaxSpeed%10 != 0){
+            throw new IllegalArgumentException("Argument can not be less then 60 and must be" +
+                    " multiple to 10");
+        }
+
+        mSpeedAccelerationIndex = a.getFloat(R.styleable.SpeedometerView_speedAccelerationIndex, 50) / 10;
+        mSpeedOnNeutralIndex = a.getFloat(R.styleable.SpeedometerView_speedOnNeutralIndex, 2) / 10;
+        mSpeedFuelConsumptionIndex = a.getFloat(R.styleable.SpeedometerView_speedFuelConsumptionIndex, 5) / 10;
+
         mEnergyIcon = a.getInteger(R.styleable.SpeedometerView_energyIcon, Color.BLACK);
         mEnergyLine = a.getInteger(R.styleable.SpeedometerView_energyLine, Color.BLACK);
-
         a.recycle();
 
-        // Set up a default TextPaint object
         mTextPaint = new TextPaint();
         mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setTextAlign(Paint.Align.LEFT);
@@ -134,7 +167,17 @@ public class SpeedometerView extends View {
         mPaint = new Paint();
         mFuelPaint = new Paint();
         mTextRect = new Rect();
+        mScaleTextPoint = new PointF();
         mBitmapMatrix = new Matrix();
+        mArrowPath = new Path();
+
+        mAlphaAnimator = ObjectAnimator.ofFloat(255, 0);
+        mAlphaAnimator.setDuration(400);
+        mAlphaAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        mAlphaAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        mAlphaAnimator.setRepeatMode(ValueAnimator.REVERSE);
+
+        mInnerCircleWidth = radius * (mOuterSectorRadius - mInnerSectorRadius);
 
         start();
     }
@@ -169,14 +212,6 @@ public class SpeedometerView extends View {
             height = desiredHeight;
         }
 
-        setMeasuredDimension(width, height);
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
-
         paddingLeft = getPaddingLeft();
         paddingTop = getPaddingTop();
         paddingRight = getPaddingRight();
@@ -185,13 +220,17 @@ public class SpeedometerView extends View {
         contentWidth = getWidth() - paddingLeft - paddingRight;
         contentHeight = getHeight() - paddingTop - paddingBottom;
 
-//        radius = Math.min(contentWidth/2, contentHeight) - Math.max(Math.max(paddingLeft, paddingRight), Math.max(paddingTop, paddingBottom));
-        radius = Math.min(contentWidth/2, contentHeight);
+        centerX = paddingLeft + contentWidth / 2;
+        centerY = paddingTop + contentHeight;
 
-        drawBackground(canvas);
+        radius = Math.min(contentWidth / 2, contentHeight);
+
+        setMeasuredDimension(width, height);
     }
 
-    private void drawBackground(Canvas canvas){
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
 
         drawBackgroundCircle(canvas);
 
@@ -212,44 +251,36 @@ public class SpeedometerView extends View {
         mPaint.setColor(mBackgroundColor);
         mPaint.setStyle(Paint.Style.FILL);
 
-        mBackgroundCircleRec = new RectF(paddingLeft + contentWidth / 2 - radius,
-                paddingTop + (contentHeight - radius),
-                contentWidth / 2 + radius + paddingRight,
-                paddingTop + (contentHeight - radius) + radius*2);
-
-        Log.d("RADIUS", String.valueOf(radius));
-        Log.d("C_HEIGHT", String.valueOf(contentHeight));
-        Log.d("C_WEIGHT", String.valueOf(contentWidth));
-        Log.d("REC", mBackgroundCircleRec.toString());
-
-        Log.d("START", String.valueOf(paddingTop + contentHeight - radius));
-        Log.d("FINISCH", String.valueOf(paddingTop + contentHeight));
+        mBackgroundCircleRec = new RectF(
+                centerX - radius + (radius * BORDER_HEIGHT), centerY - radius + (radius * BORDER_HEIGHT),
+                centerX + radius - (radius * BORDER_HEIGHT), centerY + radius - (radius * BORDER_HEIGHT));
 
         canvas.drawArc(mBackgroundCircleRec, -180, 180, false, mPaint);
     }
 
     private void drawBorderCircle(Canvas canvas){
-        mPaint.setColor(Color.BLACK);
+        mPaint.setColor(mBorderColor);
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(radius *BORDER_HEIGHT);
+        mPaint.setStrokeWidth(radius * BORDER_HEIGHT);
         canvas.drawArc(mBackgroundCircleRec, -180, 180, false, mPaint);
     }
 
     private void drawArrowCircle(Canvas canvas){
         mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(getWidth()/2,paddingTop + contentHeight,
-                radius * ARROW_CIRCLE_INDEX, mPaint);
+        canvas.drawCircle(centerX, centerY, radius * ARROW_CIRCLE_INDEX, mPaint);
     }
 
     private void drawScale(Canvas canvas){
-        mPaint.setColor(Color.BLACK);
+        mPaint.setColor(mBorderColor);
 
-        mScaleCircleRec = new RectF(paddingLeft + contentWidth/2 - radius + radius *SCALES_WIDTH/2,
-                paddingTop + (contentHeight - radius) + radius *SCALES_WIDTH/2 ,
-                contentWidth/2 + radius - radius *SCALES_WIDTH/2 + paddingRight,
-                paddingTop + (contentHeight - radius) + radius *SCALES_WIDTH/2 + radius*2);
-        mPaint.setStrokeWidth(radius *SCALES_WIDTH);
+        mScaleCircleRec = new RectF(
+                centerX - radius + (radius * BORDER_HEIGHT) + radius * SCALES_WIDTH / 2,
+                centerY - radius + (radius * BORDER_HEIGHT) + radius * SCALES_WIDTH / 2,
+                centerX + radius - (radius * BORDER_HEIGHT) - radius * SCALES_WIDTH / 2,
+                centerY + radius - (radius * BORDER_HEIGHT) - radius * SCALES_WIDTH / 2);
+
+        mPaint.setStrokeWidth(radius * SCALES_WIDTH);
 
         mScalePath = new Path();
         int scaleCount = mMaxSpeed/10;
@@ -259,34 +290,37 @@ public class SpeedometerView extends View {
 
         canvas.drawPath(mScalePath, mPaint);
 
+        mPaint.setColor(mSpeedIndicatorColor);
         mPaint.setStrokeWidth(2);
         mPaint.setStyle(Paint.Style.FILL);
-        mPaint.setTextSize(radius *TEXT_SIZE);
+        mPaint.setTextSize(radius * TEXT_SIZE);
         canvas.save(Canvas.MATRIX_SAVE_FLAG);
 
-        mPaint.setStrokeWidth(radius *OUTER_CIRCLE_WIDTH);
-        PointF pointF = new PointF();
+        mPaint.setStrokeWidth(radius * OUTER_CIRCLE_WIDTH);
         float angle;
-        float step = 180/(mMaxSpeed/10);
-        for(int i = 0; i < mMaxSpeed/10; ++i){
+        float step = 180 / (mMaxSpeed / 10);
+        for(int i = 0; i < mMaxSpeed / 10; ++i){
 
-            angle = 10 + i*step;
-            calculateCirclePoint(angle, radius *SCALE_RADIUS_INDEX, pointF);
-            drawText(canvas, String.valueOf(10 * i + 10), pointF.x, pointF.y, mPaint);
+            angle = 10 + i * step;
+            calculateCirclePoint(angle, radius * SCALE_RADIUS_INDEX, mScaleTextPoint);
+            drawText(canvas, String.valueOf(10 * i + 10), mScaleTextPoint.x, mScaleTextPoint.y, mPaint);
         }
     }
 
     private void drawFuelLevel(Canvas canvas){
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.fuel_ico);
 
-        RectF fuelIcoRec = new RectF(paddingLeft + contentWidth/2 - radius *0.2f,
-                paddingTop + radius *0.3f,
-                paddingLeft + contentWidth/2, paddingTop + radius *0.5f);
-        mBitmapMatrix.mapRect(fuelIcoRec);
+        mFuelIcoRec = new RectF(
+                centerX - radius + radius * 0.8f,
+                centerY - radius + radius * 0.35f,
+                centerX,
+                centerY - radius + radius * 0.55f);
+
+        mBitmapMatrix.mapRect(mFuelIcoRec);
 
         mMatrixFilter = new float[]{
-                0, 0, 0, 0, (1 - mCurrentFuelLevel/100)*255,
-                0, 0, 0, 0, mCurrentFuelLevel/100*255,
+                0, 0, 0, 0, (1 - mCurrentFuelLevel / 100) * 255,
+                0, 0, 0, 0, mCurrentFuelLevel / 100 * 255,
                 0, 0, 0, 0, 0,
                 0, 0, 0, 1, 0
         };
@@ -294,82 +328,83 @@ public class SpeedometerView extends View {
         mFuelPaint.setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(mMatrixFilter)));
         mFuelPaint.setStyle(Paint.Style.FILL);
 
-        canvas.drawBitmap(bitmap, null, fuelIcoRec, mFuelPaint);
+        canvas.drawBitmap(bitmap, null, mFuelIcoRec, mFuelPaint);
 
-        Rect fuelLevelRec = new Rect(paddingLeft + contentWidth/2,paddingTop + (int)(radius *0.37f),
-                paddingLeft + (int)(contentWidth/2) + (int)(radius *0.3f*(mCurrentFuelLevel/mMaxFuelLevel)),
-                (int)(radius *0.42f));
-        if(mCurrentFuelLevel/mMaxFuelLevel < (float)1/3 ){
+        mFuelLevel = new Rect(
+                centerX,
+                centerY - radius + (int) (radius * 0.43f),
+                centerX + (int ) (radius * 0.3f * (mCurrentFuelLevel / mMaxFuelLevel)),
+                centerY - radius + (int) (radius * 0.45f));
 
-            if(mAlphaLevel < 35){
-                 mAlphaR = 30;
-            }else if(mAlphaLevel > 225){
-                mAlphaR = -30;
+        mAlphaAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                mFuelPaint.setAlpha(((int) (float) valueAnimator.getAnimatedValue()));
             }
+        });
 
-            mAlphaLevel += mAlphaR;
-
-            mFuelPaint.setAlpha(mAlphaLevel);
-        }else {
-            mAlphaLevel = 255;
-            mFuelPaint.setAlpha(mAlphaLevel);
+        if(mCurrentFuelLevel/mMaxFuelLevel < (float) 1/3 ){
+            if(!mIsAlphaAnimating){
+                mIsAlphaAnimating = true;
+                mAlphaAnimator.start();
+            }
+        }else{
+            mIsAlphaAnimating = false;
+            mAlphaAnimator.cancel();
         }
 
-        canvas.drawRect(fuelLevelRec, mFuelPaint);
+        canvas.drawRect(mFuelLevel, mFuelPaint);
     }
 
     private void drawArrow(Canvas canvas){
 
+        mPaint.setColor(mArrowColor);
         canvas.save();
-        canvas.rotate(-90 + ((float)180/mMaxSpeed)*mCurrentSpeed, paddingLeft + contentWidth/2,
-                paddingTop + contentHeight);
-
+        canvas.rotate( -90 + ((float) 180 / mMaxSpeed) * mCurrentSpeed, centerX, centerY);
         mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.FILL);
 
-        Path arrow = new Path();
-        arrow.moveTo(paddingLeft + contentWidth/2 - radius *ARROW_WEIGHT_INDEX, paddingTop + contentHeight);
-        arrow.lineTo(paddingLeft + contentWidth/2 - radius *ARROW_WEIGHT_INDEX*ARROW_WEIGHT2_INDEX,
-                paddingTop +  (contentHeight - radius*ARROW_HEIGHT_INDEX));
-        arrow.lineTo(paddingLeft + contentWidth/2 + radius *ARROW_WEIGHT_INDEX*ARROW_WEIGHT2_INDEX,
-                paddingTop + (contentHeight - radius*ARROW_HEIGHT_INDEX));
-        arrow.lineTo(paddingLeft + contentWidth/2 + radius *ARROW_WEIGHT_INDEX, paddingTop + contentHeight);
-        arrow.close();
+        mArrowPath.moveTo(centerX - radius * ARROW_WEIGHT_INDEX, centerY);
+        mArrowPath.lineTo(centerX - radius * ARROW_WEIGHT2_INDEX, centerY - radius * mArrowHeight);
+        mArrowPath.lineTo(centerX + radius * ARROW_WEIGHT2_INDEX, centerY - radius * mArrowHeight);
+        mArrowPath.lineTo(centerX + radius * ARROW_WEIGHT_INDEX, centerY);
+        mArrowPath.close();
 
-        canvas.drawPath(arrow, mPaint);
+        canvas.drawPath(mArrowPath, mPaint);
         canvas.restore();
     }
 
     private void drawInnerCircle(Canvas canvas){
-        mPaint.setColor(Color.BLACK);
+        mPaint.setColor(mAfterArrowSectorColor);
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(radius *INNER_CIRCLE_WIDTH);
+        mPaint.setStrokeWidth(mInnerCircleWidth);
 
-        innerCircleRec = new RectF(paddingLeft + contentWidth/2 - radius *INNER_CIRCLE_RADIUS,
-                paddingTop + contentHeight - radius *INNER_CIRCLE_RADIUS,
-                contentWidth/2 + radius *INNER_CIRCLE_RADIUS + paddingRight,
-                radius + radius *INNER_CIRCLE_RADIUS + paddingBottom);
+        mInnerCircleRec = new RectF(
+                centerX - radius * mOuterSectorRadius + mInnerCircleWidth,
+                centerY - radius * mOuterSectorRadius + mInnerCircleWidth,
+                centerX + radius * mOuterSectorRadius - mInnerCircleWidth,
+                centerY + radius * mOuterSectorRadius - mInnerCircleWidth);
 
-        canvas.drawArc(innerCircleRec, -180, 180, false, mPaint);
+        canvas.drawArc(mInnerCircleRec, -180, 180, false, mPaint);
 
         drawInnerSpeedCircle(canvas);
     }
 
     private void drawInnerSpeedCircle(Canvas canvas){
-        mPaint.setColor(Color.RED);
+        mPaint.setColor(mBeforeArrowSectorColor);
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(radius *INNER_CIRCLE_WIDTH);
+        mPaint.setStrokeWidth(mInnerCircleWidth);
 
-        canvas.drawArc(innerCircleRec, - 180, ((float)180/mMaxSpeed)*mCurrentSpeed, false, mPaint);
+        canvas.drawArc(mInnerCircleRec, - 180, ((float)180/mMaxSpeed)*mCurrentSpeed, false, mPaint);
     }
 
     private float changeSpeed(float newSpeedValue){
         if(newSpeedValue > mMaxSpeed){
-            setmCurrentSpeed(mMaxSpeed);
+            setCurrentSpeed(mMaxSpeed);
         }else if(newSpeedValue < 0){
-            setmCurrentSpeed(0);
+            setCurrentSpeed(0);
         }else {
-            setmCurrentSpeed(newSpeedValue);
+            setCurrentSpeed(newSpeedValue);
         }
 
         listener.onSpeedChange(mCurrentSpeed);
@@ -379,7 +414,7 @@ public class SpeedometerView extends View {
 
     private void start() {
 
-       final Handler handler = new Handler();
+        final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -388,10 +423,10 @@ public class SpeedometerView extends View {
                 if (stop) {
                     changeSpeed(mCurrentSpeed -= calculateAcceleration(4));
                 } else if (go && mCurrentFuelLevel > 0) {
-                    changeSpeed(mCurrentSpeed += calculateAcceleration(4));
+                    changeSpeed(mCurrentSpeed += calculateAcceleration(mSpeedAccelerationIndex));
                     changeFuelLevel();
                 } else {
-                    changeSpeed(mCurrentSpeed -= 0.4);
+                    changeSpeed(mCurrentSpeed -= mSpeedOnNeutralIndex);
                 }
 
                 invalidate();
@@ -401,12 +436,12 @@ public class SpeedometerView extends View {
 
     private void drawText(Canvas canvas, String text, float x, float y, Paint paint){
         paint.getTextBounds(text, 0, text.length(), mTextRect);
-        canvas.drawText(text, x - mTextRect.width()/2f, y + mTextRect.height()/2f, paint);
+        canvas.drawText(text, x - mTextRect.width() / 2f, y + mTextRect.height() / 2f, paint);
     }
 
     private void changeFuelLevel(){
         if(mCurrentFuelLevel != 0 && mCurrentFuelLevel <= 100){
-            mCurrentFuelLevel -= 1;
+            mCurrentFuelLevel -= mSpeedFuelConsumptionIndex;
         }else if(mCurrentFuelLevel <= 0 && go){
             go = false;
         }
@@ -418,147 +453,143 @@ public class SpeedometerView extends View {
 
     private void calculateCirclePoint(float angle, float radius, PointF point) {
 
-        point.set((float) (paddingLeft + contentWidth/2 - radius * Math.cos(angle / 180 * Math.PI)),
-                (float) (paddingTop + this.radius - radius * Math.sin(angle / 180 * Math.PI)));
+        point.set((float) (centerX - radius * Math.cos(angle / 180 * Math.PI)),
+                (float) (centerY - radius * Math.sin(angle / 180 * Math.PI)));
     }
 
-    public void setFuelLevel(int newLevel){
-        mCurrentFuelLevel = newLevel;
-    }
-
-    public int getmBackgroundColor() {
+    public int getBackgroundColor() {
         return mBackgroundColor;
     }
 
-    public void setmBackgroundColor(int mBackgroundColor) {
+    public void setBackgroundColor(int mBackgroundColor) {
         this.mBackgroundColor = mBackgroundColor;
     }
 
-    public int getmSpeedIndicatorColor() {
+    public int getSpeedIndicatorColor() {
         return mSpeedIndicatorColor;
     }
 
-    public void setmSpeedIndicatorColor(int mSpeedIndicatorColor) {
+    public void setSpeedIndicatorColor(int mSpeedIndicatorColor) {
         this.mSpeedIndicatorColor = mSpeedIndicatorColor;
     }
 
-    public int getmBeforeArrowSectorColor() {
+    public int getBeforeArrowSectorColor() {
         return mBeforeArrowSectorColor;
     }
 
-    public void setmBeforeArrowSectorColor(int mBeforeArrowSectorColor) {
+    public void setBeforeArrowSectorColor(int mBeforeArrowSectorColor) {
         this.mBeforeArrowSectorColor = mBeforeArrowSectorColor;
     }
 
-    public int getmAfterArrowSectorColor() {
+    public int getAfterArrowSectorColor() {
         return mAfterArrowSectorColor;
     }
 
-    public void setmAfterArrowSectorColor(int mAfterArrowSectorColor) {
+    public void setAfterArrowSectorColor(int mAfterArrowSectorColor) {
         this.mAfterArrowSectorColor = mAfterArrowSectorColor;
     }
 
-    public int getmSectorRadius() {
+    public int getSectorRadius() {
         return mSectorRadius;
     }
 
-    public void setmSectorRadius(int mSectorRadius) {
+    public void setSectorRadius(int mSectorRadius) {
         this.mSectorRadius = mSectorRadius;
     }
 
-    public int getmBorderColor() {
+    public int getBorderColor() {
         return mBorderColor;
     }
 
-    public void setmBorderColor(int mBorderColor) {
+    public void setBorderColor(int mBorderColor) {
         this.mBorderColor = mBorderColor;
     }
 
-    public int getmArrowColor() {
+    public int getArrowColor() {
         return mArrowColor;
     }
 
-    public void setmArrowColor(int mArrowColor) {
+    public void setArrowColor(int mArrowColor) {
         this.mArrowColor = mArrowColor;
     }
 
-    public int getmInnerSectorRadius() {
+    public float getInnerSectorRadius() {
         return mInnerSectorRadius;
     }
 
-    public void setmInnerSectorRadius(int mInnerSectorRadius) {
+    public void setInnerSectorRadius(int mInnerSectorRadius) {
         this.mInnerSectorRadius = mInnerSectorRadius;
     }
 
-    public int getmOuterSectorRadius() {
+    public float getOuterSectorRadius() {
         return mOuterSectorRadius;
     }
 
-    public void setmOuterSectorRadius(int mOuterSectorRadius) {
+    public void setOuterSectorRadius(int mOuterSectorRadius) {
         this.mOuterSectorRadius = mOuterSectorRadius;
     }
 
-    public int getmMaxSpeed() {
+    public int getMaxSpeed() {
         return mMaxSpeed;
     }
 
-    public void setmMaxSpeed(int mMaxSpeed) {
+    public void setMaxSpeed(int mMaxSpeed) {
         this.mMaxSpeed = mMaxSpeed;
     }
 
-    public int getmEnergyIcon() {
+    public int getEnergyIcon() {
         return mEnergyIcon;
     }
 
-    public void setmEnergyIcon(int mEnergyIcon) {
+    public void setEnergyIcon(int mEnergyIcon) {
         this.mEnergyIcon = mEnergyIcon;
     }
 
-    public int getmEnergyLine() {
+    public int getEnergyLine() {
         return mEnergyLine;
     }
 
-    public void setmEnergyLine(int mEnergyLine) {
+    public void setEnergyLine(int mEnergyLine) {
         this.mEnergyLine = mEnergyLine;
     }
 
-    public Paint getmPaint() {
+    public Paint getPaint() {
         return mPaint;
     }
 
-    public void setmPaint(Paint mPaint) {
+    public void setPaint(Paint mPaint) {
         this.mPaint = mPaint;
     }
 
-    public TextPaint getmTextPaint() {
+    public TextPaint getTextPaint() {
         return mTextPaint;
     }
 
-    public void setmTextPaint(TextPaint mTextPaint) {
+    public void setTextPaint(TextPaint mTextPaint) {
         this.mTextPaint = mTextPaint;
     }
 
-    public float getmTextWidth() {
+    public float getTextWidth() {
         return mTextWidth;
     }
 
-    public void setmTextWidth(float mTextWidth) {
+    public void setTextWidth(float mTextWidth) {
         this.mTextWidth = mTextWidth;
     }
 
-    public float getmTextHeight() {
+    public float getTextHeight() {
         return mTextHeight;
     }
 
-    public void setmTextHeight(float mTextHeight) {
+    public void setTextHeight(float mTextHeight) {
         this.mTextHeight = mTextHeight;
     }
 
-    public float getmCurrentSpeed() {
+    public float getCurrentSpeed() {
         return mCurrentSpeed;
     }
 
-    public void setmCurrentSpeed(float mCurrentSpeed) {
+    public void setCurrentSpeed(float mCurrentSpeed) {
         this.mCurrentSpeed = mCurrentSpeed;
     }
 
@@ -586,20 +617,24 @@ public class SpeedometerView extends View {
         this.listener = listener;
     }
 
-    public float getmCurrentFuelLevel() {
+    public float getCurrentFuelLevel() {
         return mCurrentFuelLevel;
     }
 
-    public void setmCurrentFuelLevel(float mCurrentFuelLevel) {
+    public void setCurrentFuelLevel(float mCurrentFuelLevel) {
         this.mCurrentFuelLevel = mCurrentFuelLevel;
     }
 
-    public float getmMaxFuelLevel() {
+    public float getMaxFuelLevel() {
         return mMaxFuelLevel;
     }
 
-    public void setmMaxFuelLevel(float mMaxFuelLevel) {
+    public void setMaxFuelLevel(float mMaxFuelLevel) {
         this.mMaxFuelLevel = mMaxFuelLevel;
+    }
+
+    public void setCurrentFuelLevel(int newCurrentFuelLevel){
+        mCurrentFuelLevel = newCurrentFuelLevel;
     }
 
 

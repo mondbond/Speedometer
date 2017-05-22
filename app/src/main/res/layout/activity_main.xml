@@ -9,15 +9,16 @@
 
     <com.example.mond.speedometer.SpeedometerView
         android:id="@+id/speedometer"
-        android:layout_width="100dp"
+        android:layout_width="200dp"
         android:layout_height="100dp"
-        app:backgroundColor="@color/colorAccent" />
+        app:backgroundColor="@color/colorAccent"
+        app:maxSpeed="100"/>
 
     <Button
         android:id="@+id/stopBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Button"
+        android:text="@string/stop"
         tools:layout_editor_absoluteX="30dp"
         tools:layout_editor_absoluteY="205dp"
         android:layout_alignBaseline="@+id/goBtn"
@@ -28,7 +29,7 @@
         android:id="@+id/goBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Button"
+        android:text="@string/go"
         tools:layout_editor_absoluteX="186dp"
         tools:layout_editor_absoluteY="205dp"
         android:layout_below="@+id/speedometer"
@@ -42,10 +43,11 @@
         android:id="@+id/speedValue"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="49dp"
         android:textSize="30sp"
         android:text="TextView"
-        android:layout_below="@+id/goBtn"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_above="@+id/stopBtn"
+        android:layout_alignLeft="@+id/goBtn"
+        android:layout_alignStart="@+id/goBtn"
+        android:layout_marginLeft="44dp"
+        android:layout_marginStart="44dp" />
 </RelativeLayout>
