@@ -13,6 +13,7 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -20,11 +21,16 @@ import android.os.Handler;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 
+import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
-// TODO: 23/05/17 add possibility to refill fuel level
+// TODO: 23/05/17 ? add possibility to refill fuel level
 public class SpeedometerView extends View {
+
+    private final int INVALIDATION_TIME = 30;
+
+    private boolean mIsInvalidation;
 
     private final float OUTER_CIRCLE_WIDTH_INDEX = 0.05f;
     private final float SCALE_RADIUS_INDEX = 0.75f;
@@ -81,6 +87,7 @@ public class SpeedometerView extends View {
     private PointF mScaleTextPoint;
 
     private Matrix mBitmapMatrix;
+    private Matrix mRotateMatrix;
 
     private ValueAnimator mAlphaAnimator;
     private boolean mIsAlphaAnimating;
@@ -121,7 +128,7 @@ public class SpeedometerView extends View {
 
         final TypedArray attr = getContext().obtainStyledAttributes(
                 attrs, R.styleable.SpeedometerView, defStyle, 0);
-        // TODO: 22.05.17 implement check for errors also on setters
+        // TODO: - 22.05.17 implement check for errors also on setters
         mBackgroundColor = attr.getColor(R.styleable.SpeedometerView_backgroundColor, Color.WHITE);
         mSpeedIndicatorColor = attr.getColor(R.styleable.SpeedometerView_speedIndicatorColor, Color.BLACK);
         mBeforeArrowSectorColor = attr.getColor(R.styleable.SpeedometerView_beforeArrowSectorColor, Color.RED);
@@ -129,44 +136,14 @@ public class SpeedometerView extends View {
         mBorderColor = attr.getColor(R.styleable.SpeedometerView_borderColor, Color.BLACK);
         mArrowColor = attr.getColor(R.styleable.SpeedometerView_arrowColor, Color.BLACK);
 
-        mArrowHeight = (float) attr.getInteger(R.styleable.SpeedometerView_arrowHeight, 60)/100;
-        // TODO: 23/05/17 DRY!!! for each attribute should be getter/setter and you can call setter to validate input data 
-        if(mArrowHeight < 0){
-            throw new IllegalArgumentException("Argument can not be negative or 0");
-        }
-
-        mInnerSectorRadius = ((float) attr.getInteger(R.styleable.SpeedometerView_innerSectorRadius, 30)) / 100;
-        if(mInnerSectorRadius < 0){
-            throw new IllegalArgumentException("Argument can not be negative or 0");
-        }
-
-        mOuterSectorRadius = ((float) (attr.getInteger(R.styleable.SpeedometerView_outerSectorRadius, 40))) / 100;
-        if(mOuterSectorRadius < 0 || mOuterSectorRadius < mInnerSectorRadius){
-            throw new IllegalArgumentException("Argument can not be negative or 0 and must be bigger" +
-                    " then inner sector radius");
-        }
-
-        mMaxSpeed = attr.getInteger(R.styleable.SpeedometerView_maxSpeed, 90);
-        if(mMaxSpeed < 60 || mMaxSpeed%10 != 0){
-            throw new IllegalArgumentException("Argument can not be less then 60 and must be" +
-                    " multiple to 10");
-        }
-
-        mSpeedAccelerationIndex = attr.getFloat(R.styleable.SpeedometerView_speedAccelerationIndex, 50) / 10;
-        if(mSpeedAccelerationIndex < 0){
-            throw new IllegalArgumentException("Argument can not be negative");
-        }
-
-        mSpeedOnNeutralIndex = attr.getFloat(R.styleable.SpeedometerView_speedOnNeutralIndex, 2) / 10;
-        if(mSpeedOnNeutralIndex < 0){
-            throw new IllegalArgumentException("Argument can not be negative");
-        }
-
-        mSpeedFuelConsumptionIndex = attr.getFloat(R.styleable.SpeedometerView_speedFuelConsumptionIndex, 5) / 10;
-        if(mSpeedFuelConsumptionIndex < 0){
-            throw new IllegalArgumentException("Argument can not be negative");
-        }
-
+        setArrowHeight((float) attr.getInteger(R.styleable.SpeedometerView_arrowHeight, 60)/100);
+        // TODO: - 23/05/17 DRY!!! for each attribute should be getter/setter and you can call setter to validate input data
+        setInnerSectorRadius(((float) attr.getInteger(R.styleable.SpeedometerView_innerSectorRadius, 30)) / 100);
+        setOuterSectorRadius(((float) (attr.getInteger(R.styleable.SpeedometerView_outerSectorRadius, 40))) / 100);
+        setMaxSpeed(attr.getInteger(R.styleable.SpeedometerView_maxSpeed, 90));
+        setSpeedAccelerationIndex(attr.getFloat(R.styleable.SpeedometerView_speedAccelerationIndex, 50) / 10);
+        setSpeedOnNeutralIndex(attr.getFloat(R.styleable.SpeedometerView_speedOnNeutralIndex, 2) / 10);
+        setSpeedFuelConsumptionIndex(attr.getFloat(R.styleable.SpeedometerView_speedFuelConsumptionIndex, 5) / 10);
         attr.recycle();
 
         mTextPaint = new TextPaint();
@@ -178,6 +155,7 @@ public class SpeedometerView extends View {
         mTextRect = new Rect();
         mScaleTextPoint = new PointF();
         mBitmapMatrix = new Matrix();
+        mRotateMatrix = new Matrix();
         mArrowPath = new Path();
 
         mAlphaAnimator = ObjectAnimator.ofFloat(255, 0);
@@ -357,7 +335,7 @@ public class SpeedometerView extends View {
             }
         });
 
-        if(mCurrentFuelLevel/mMaxFuelLevel < (float) 1/3 ){
+        if(mCurrentFuelLevel/mMaxFuelLevel < (float) 1/3){
             if(!mIsAlphaAnimating){
                 mIsAlphaAnimating = true;
                 mAlphaAnimator.start();
@@ -373,21 +351,22 @@ public class SpeedometerView extends View {
     private void drawArrow(Canvas canvas){
 
         mPaint.setColor(mArrowColor);
-        // TODO: 23/05/17  check information about Matrix transformation
+        mRotateMatrix.reset();
+        // TODO: - 23/05/17  check information about Matrix transformation
         // http://startandroid.ru/ru/uroki/vse-uroki-spiskom/317-urok-144-risovanie-matrix-preobrazovanija.html
-        canvas.save();
-        canvas.rotate( -90 + ((float) 180 / mMaxSpeed) * mCurrentSpeed, centerX, centerY);
+        mRotateMatrix.setRotate(-90 + ((float) 180 / mMaxSpeed) * mCurrentSpeed, centerX, centerY);
         mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.FILL);
 
+        mArrowPath.reset();
         mArrowPath.moveTo(centerX - radius * ARROW_WIGHT_INDEX, centerY);
         mArrowPath.lineTo(centerX - radius * ARROW_TOP_WIGHT_INDEX, centerY - radius * mArrowHeight);
         mArrowPath.lineTo(centerX + radius * ARROW_TOP_WIGHT_INDEX, centerY - radius * mArrowHeight);
         mArrowPath.lineTo(centerX + radius * ARROW_WIGHT_INDEX, centerY);
         mArrowPath.close();
+        mArrowPath.transform(mRotateMatrix);
 
         canvas.drawPath(mArrowPath, mPaint);
-        canvas.restore();
     }
 
     private void drawInnerCircle(Canvas canvas){
@@ -429,28 +408,35 @@ public class SpeedometerView extends View {
     }
 
     private void start() {
-        // TODO: 23/05/17 no need to update view when the animation idle 
+        mIsInvalidation = true;
+        // TODO: - 23/05/17 no need to update view when the animation idle
         final Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                // TODO: 23/05/17 update invalidation time, why 100??? avoid meaningless hardcode values 
-                handler.postDelayed(this, 100);
 
-                if (stop) {
-                    // TODO: 23/05/17 debug mCurrentSpeed variable here!
-                    changeSpeed(mCurrentSpeed -= calculateAcceleration(ACCELERATION_INDEX));
-                } else if (go && mCurrentFuelLevel > 0) {
-                    changeSpeed(mCurrentSpeed += calculateAcceleration(mSpeedAccelerationIndex));
-                    changeFuelLevel();
-                } else {
-                    changeSpeed(mCurrentSpeed -= mSpeedOnNeutralIndex);
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    // TODO: - 23/05/17 update invalidation time, why 100??? avoid meaningless hardcode values
+                    Log.d("A", "i");
+                    if(mCurrentSpeed > 0 || go) {
+                    handler.postDelayed(this, INVALIDATION_TIME);
+                    }else {
+                        mIsInvalidation = false;
+                    }
+
+                    if (stop) {
+                        // TODO: 23/05/17 debug mCurrentSpeed variable here!
+                        changeSpeed(mCurrentSpeed -= calculateAcceleration(ACCELERATION_INDEX));
+                    } else if (go && mCurrentFuelLevel > 0) {
+                        changeSpeed(mCurrentSpeed += calculateAcceleration(mSpeedAccelerationIndex));
+                        changeFuelLevel();
+                    } else {
+                        changeSpeed(mCurrentSpeed -= mSpeedOnNeutralIndex);
+                    }
+
+                    invalidate();
                 }
-
-                invalidate();
-            }
-            // TODO: 23/05/17 why 3000? 
-        }, 3000);
+                // TODO: - 23/05/17 why 3000?
+            }, 0);
     }
 
     private void drawText(Canvas canvas, String text, float x, float y, Paint paint){
@@ -475,7 +461,7 @@ public class SpeedometerView extends View {
     }
 
     // TODO: 22.05.17 remake it to use matrix rotation instead it much easier for calculation
-    private void calculateCirclePoint(float angle, float radius, PointF point) {
+            private void calculateCirclePoint(float angle, float radius, PointF point) {
         point.set((float) (centerX - radius * Math.cos(angle / 180 * Math.PI)),
                 (float) (centerY - radius * Math.sin(angle / 180 * Math.PI)));
     }
@@ -553,7 +539,7 @@ public class SpeedometerView extends View {
         return mInnerSectorRadius;
     }
 
-    public void setInnerSectorRadius(int mInnerSectorRadius) {
+    public void setInnerSectorRadius(float mInnerSectorRadius) {
         if(mInnerSectorRadius < 0){
             throw new IllegalArgumentException("Argument can not be negative or 0");
         }else {
@@ -565,7 +551,7 @@ public class SpeedometerView extends View {
         return mOuterSectorRadius;
     }
 
-    public void setOuterSectorRadius(int mOuterSectorRadius) {
+    public void setOuterSectorRadius(float mOuterSectorRadius) {
         if(mOuterSectorRadius < 0 || mOuterSectorRadius < mInnerSectorRadius){
             throw new IllegalArgumentException("Argument can not be negative or 0 and must be bigger" +
                     " then inner sector radius");
@@ -624,6 +610,9 @@ public class SpeedometerView extends View {
     }
 
     public void setGo(boolean go) {
+        if(!mIsInvalidation) {
+            start();
+        }
         this.go = go;
     }
 
@@ -645,6 +634,10 @@ public class SpeedometerView extends View {
         }else {
             this.mCurrentFuelLevel = currentFuelLevel;
         }
+    }
+
+    public void refillFuelLevel(){
+        mCurrentFuelLevel = mMaxFuelLevel;
     }
 
     public float getMaxFuelLevel() {
