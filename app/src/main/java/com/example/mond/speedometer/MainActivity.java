@@ -12,6 +12,11 @@ public class MainActivity extends AppCompatActivity implements SpeedometerView.S
     SpeedometerView speedometer;
     TextView speedValue;
 
+    // TODO: 23/05/17 create layout with few  SpeedometerView, set up attributes from xml and from java code,
+    // test different sizes(match_parent, wrap_content, width=100dp, height=200dp)
+    // test attributes change at the runtime (when you click the button, set random color).
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
