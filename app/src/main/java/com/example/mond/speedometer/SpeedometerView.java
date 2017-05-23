@@ -23,6 +23,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
+// TODO: 23/05/17 add possibility to refill fuel level
 public class SpeedometerView extends View {
 
     private final float OUTER_CIRCLE_WIDTH_INDEX = 0.05f;
@@ -120,7 +121,7 @@ public class SpeedometerView extends View {
 
         final TypedArray attr = getContext().obtainStyledAttributes(
                 attrs, R.styleable.SpeedometerView, defStyle, 0);
-
+        // TODO: 22.05.17 implement check for errors also on setters
         mBackgroundColor = attr.getColor(R.styleable.SpeedometerView_backgroundColor, Color.WHITE);
         mSpeedIndicatorColor = attr.getColor(R.styleable.SpeedometerView_speedIndicatorColor, Color.BLACK);
         mBeforeArrowSectorColor = attr.getColor(R.styleable.SpeedometerView_beforeArrowSectorColor, Color.RED);
@@ -129,6 +130,7 @@ public class SpeedometerView extends View {
         mArrowColor = attr.getColor(R.styleable.SpeedometerView_arrowColor, Color.BLACK);
 
         mArrowHeight = (float) attr.getInteger(R.styleable.SpeedometerView_arrowHeight, 60)/100;
+        // TODO: 23/05/17 DRY!!! for each attribute should be getter/setter and you can call setter to validate input data 
         if(mArrowHeight < 0){
             throw new IllegalArgumentException("Argument can not be negative or 0");
         }
@@ -347,6 +349,7 @@ public class SpeedometerView extends View {
                 centerX + (int ) (radius * 0.3f * (mCurrentFuelLevel / mMaxFuelLevel)),
                 centerY - radius + (int) (radius * 0.47f));
 
+        // TODO: 23/05/17 this check should be performed after user refill fuel lever or after creation, not on each fraction
         mAlphaAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
@@ -370,6 +373,8 @@ public class SpeedometerView extends View {
     private void drawArrow(Canvas canvas){
 
         mPaint.setColor(mArrowColor);
+        // TODO: 23/05/17  check information about Matrix transformation
+        // http://startandroid.ru/ru/uroki/vse-uroki-spiskom/317-urok-144-risovanie-matrix-preobrazovanija.html
         canvas.save();
         canvas.rotate( -90 + ((float) 180 / mMaxSpeed) * mCurrentSpeed, centerX, centerY);
         mPaint.setColor(Color.BLACK);
@@ -424,13 +429,16 @@ public class SpeedometerView extends View {
     }
 
     private void start() {
+        // TODO: 23/05/17 no need to update view when the animation idle 
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
+                // TODO: 23/05/17 update invalidation time, why 100??? avoid meaningless hardcode values 
                 handler.postDelayed(this, 100);
 
                 if (stop) {
+                    // TODO: 23/05/17 debug mCurrentSpeed variable here!
                     changeSpeed(mCurrentSpeed -= calculateAcceleration(ACCELERATION_INDEX));
                 } else if (go && mCurrentFuelLevel > 0) {
                     changeSpeed(mCurrentSpeed += calculateAcceleration(mSpeedAccelerationIndex));
@@ -441,6 +449,7 @@ public class SpeedometerView extends View {
 
                 invalidate();
             }
+            // TODO: 23/05/17 why 3000? 
         }, 3000);
     }
 
@@ -465,11 +474,13 @@ public class SpeedometerView extends View {
         return (1 - mCurrentSpeed/mMaxSpeed)*baseAcceleration;
     }
 
+    // TODO: 22.05.17 remake it to use matrix rotation instead it much easier for calculation
     private void calculateCirclePoint(float angle, float radius, PointF point) {
         point.set((float) (centerX - radius * Math.cos(angle / 180 * Math.PI)),
                 (float) (centerY - radius * Math.sin(angle / 180 * Math.PI)));
     }
 
+    // TODO: 23/05/17 update values in runtime, apply changed values
     public int getBackgroundColor() {
         return mBackgroundColor;
     }
