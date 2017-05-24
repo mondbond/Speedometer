@@ -163,6 +163,13 @@ public class SpeedometerView extends View {
 
         mFuelIco = BitmapFactory.decodeResource(getResources(), R.drawable.fuel_ico);
 
+        mAlphaAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                mFuelPaint.setAlpha(((int) (float) valueAnimator.getAnimatedValue()));
+            }
+        });
+
         start();
     }
 
@@ -324,13 +331,7 @@ public class SpeedometerView extends View {
                 centerX + (int ) (radius * 0.3f * (mCurrentFuelLevel / mMaxFuelLevel)),
                 centerY - radius + (int) (radius * 0.47f));
 
-        // TODO: 23/05/17 this check should be performed after user refill fuel lever or after creation, not on each fraction
-        mAlphaAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                mFuelPaint.setAlpha(((int) (float) valueAnimator.getAnimatedValue()));
-            }
-        });
+        // TODO: ? 23/05/17 this check should be performed after user refill fuel lever or after creation, not on each fraction
 
         if(mCurrentFuelLevel/mMaxFuelLevel < (float) 1/3){
             if(!mIsAlphaAnimating){
