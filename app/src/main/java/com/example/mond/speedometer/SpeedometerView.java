@@ -13,20 +13,20 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 
+import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
 // TODO: 23/05/17 - add possibility to refill fuel level
 public class SpeedometerView extends View {
 
-    private final int INVALIDATION_TIME = 30;
+    private final int FRAME_RATE_DELAY_IN_MS = 30;
 
     private boolean mIsInvalidation;
 
@@ -139,9 +139,9 @@ public class SpeedometerView extends View {
         setInnerSectorRadius(((float) attr.getInteger(R.styleable.SpeedometerView_innerSectorRadius, 30)) / 100);
         setOuterSectorRadius(((float) (attr.getInteger(R.styleable.SpeedometerView_outerSectorRadius, 40))) / 100);
         setMaxSpeed(attr.getInteger(R.styleable.SpeedometerView_maxSpeed, 90));
-        setSpeedAccelerationIndex(attr.getFloat(R.styleable.SpeedometerView_speedAccelerationIndex, 50) / 10);
-        setSpeedOnNeutralIndex(attr.getFloat(R.styleable.SpeedometerView_speedOnNeutralIndex, 2) / 10);
-        setSpeedFuelConsumptionIndex(attr.getFloat(R.styleable.SpeedometerView_speedFuelConsumptionIndex, 5) / 10);
+        setSpeedAccelerationIndex(attr.getFloat(R.styleable.SpeedometerView_speedAccelerationIndex, 50) * ((float) FRAME_RATE_DELAY_IN_MS / 100));
+        setSpeedOnNeutralIndex(attr.getFloat(R.styleable.SpeedometerView_speedOnNeutralIndex, 2) * ((float) FRAME_RATE_DELAY_IN_MS / 100));
+        setSpeedFuelConsumptionIndex(attr.getFloat(R.styleable.SpeedometerView_speedFuelConsumptionIndex, 5) * ((float) FRAME_RATE_DELAY_IN_MS / 100));
         attr.recycle();
 
         mTextPaint = new TextPaint();
@@ -341,6 +341,7 @@ public class SpeedometerView extends View {
         }else{
             mIsAlphaAnimating = false;
             mAlphaAnimator.cancel();
+            mFuelPaint.setColor(Color.GREEN);
         }
 
         canvas.drawRect(mFuelLevel, mFuelPaint);
@@ -416,13 +417,13 @@ public class SpeedometerView extends View {
                 public void run() {
                     // TODO: - 23/05/17 update invalidation time, why 100??? avoid meaningless hardcode values
                     if(mCurrentSpeed > 0 || go) {
-                    handler.postDelayed(this, INVALIDATION_TIME);
+                    handler.postDelayed(this, FRAME_RATE_DELAY_IN_MS);
                     }else {
                         mIsInvalidation = false;
                     }
 
                     if (stop) {
-                        // TODO: 23/05/17 debug mCurrentSpeed variable here!
+                        // TODO: ? 23/05/17 debug mCurrentSpeed variable here!
                         changeSpeed(mCurrentSpeed -= calculateAcceleration(ACCELERATION_INDEX));
                     } else if (go && mCurrentFuelLevel > 0) {
                         changeSpeed(mCurrentSpeed += calculateAcceleration(mSpeedAccelerationIndex));
