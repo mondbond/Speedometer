@@ -13,7 +13,6 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -21,11 +20,10 @@ import android.os.Handler;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
-// TODO: 23/05/17 ? add possibility to refill fuel level
+// TODO: 23/05/17 - add possibility to refill fuel level
 public class SpeedometerView extends View {
 
     private final int INVALIDATION_TIME = 30;
@@ -33,7 +31,7 @@ public class SpeedometerView extends View {
     private boolean mIsInvalidation;
 
     private final float OUTER_CIRCLE_WIDTH_INDEX = 0.05f;
-    private final float SCALE_RADIUS_INDEX = 0.75f;
+    private final float SCALE_RADIUS_INDEX = 0.73f;
     private final float SCALES_WIDTH_INDEX = 0.1f;
     private final float BORDER_HEIGHT_INDEX = 0.04F;
     private final float ARROW_CIRCLE_INDEX = 0.14f;
@@ -84,7 +82,7 @@ public class SpeedometerView extends View {
     private Rect mFuelLevel;
     private Path mScalePath;
     private Path mArrowPath;
-    private PointF mScaleTextPoint;
+    private Path mTextPath = new Path();
 
     private Matrix mBitmapMatrix;
     private Matrix mRotateMatrix;
@@ -153,7 +151,6 @@ public class SpeedometerView extends View {
         mPaint = new Paint();
         mFuelPaint = new Paint();
         mTextRect = new Rect();
-        mScaleTextPoint = new PointF();
         mBitmapMatrix = new Matrix();
         mRotateMatrix = new Matrix();
         mArrowPath = new Path();
@@ -257,7 +254,7 @@ public class SpeedometerView extends View {
     }
 
     private void drawArrowCircle(Canvas canvas){
-        mPaint.setColor(Color.BLACK);
+        mPaint.setColor(mArrowColor);
         mPaint.setStyle(Paint.Style.FILL);
         canvas.drawCircle(centerX, centerY, radius * ARROW_CIRCLE_INDEX, mPaint);
     }
@@ -295,12 +292,12 @@ public class SpeedometerView extends View {
         for(int i = 0; i < mMaxSpeed / 10; ++i){
 
             angle = 10 + i * step;
-            calculateCirclePoint(angle, radius * SCALE_RADIUS_INDEX, mScaleTextPoint);
-            drawText(canvas, String.valueOf(10 * i + 10), mScaleTextPoint.x, mScaleTextPoint.y, mPaint);
+            drawDial(angle, canvas, String.valueOf(10 * i + 10), mPaint);
         }
     }
 
     private void drawFuelLevel(Canvas canvas){
+
         mFuelIcoRec = new RectF(
                 centerX - radius + radius * 0.8f,
                 centerY - radius + radius * 0.35f,
@@ -316,10 +313,10 @@ public class SpeedometerView extends View {
                 0, 0, 0, 1, 0
         };
 
+        canvas.drawBitmap(mFuelIco, null, mFuelIcoRec, mFuelPaint);
+
         mFuelPaint.setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(mMatrixFilter)));
         mFuelPaint.setStyle(Paint.Style.FILL);
-
-        canvas.drawBitmap(mFuelIco, null, mFuelIcoRec, mFuelPaint);
 
         mFuelLevel = new Rect(
                 centerX,
@@ -355,7 +352,6 @@ public class SpeedometerView extends View {
         // TODO: - 23/05/17  check information about Matrix transformation
         // http://startandroid.ru/ru/uroki/vse-uroki-spiskom/317-urok-144-risovanie-matrix-preobrazovanija.html
         mRotateMatrix.setRotate(-90 + ((float) 180 / mMaxSpeed) * mCurrentSpeed, centerX, centerY);
-        mPaint.setColor(Color.BLACK);
         mPaint.setStyle(Paint.Style.FILL);
 
         mArrowPath.reset();
@@ -402,7 +398,9 @@ public class SpeedometerView extends View {
             setCurrentSpeed(newSpeedValue);
         }
 
-        listener.onSpeedChange(mCurrentSpeed);
+        if(listener != null) {
+            listener.onSpeedChange(mCurrentSpeed);
+        }
 
         return mCurrentSpeed;
     }
@@ -416,7 +414,6 @@ public class SpeedometerView extends View {
                 @Override
                 public void run() {
                     // TODO: - 23/05/17 update invalidation time, why 100??? avoid meaningless hardcode values
-                    Log.d("A", "i");
                     if(mCurrentSpeed > 0 || go) {
                     handler.postDelayed(this, INVALIDATION_TIME);
                     }else {
@@ -429,6 +426,8 @@ public class SpeedometerView extends View {
                     } else if (go && mCurrentFuelLevel > 0) {
                         changeSpeed(mCurrentSpeed += calculateAcceleration(mSpeedAccelerationIndex));
                         changeFuelLevel();
+                    } else if(mCurrentFuelLevel <= 0 && go){
+                        go = false;
                     } else {
                         changeSpeed(mCurrentSpeed -= mSpeedOnNeutralIndex);
                     }
@@ -439,20 +438,36 @@ public class SpeedometerView extends View {
             }, 0);
     }
 
-    private void drawText(Canvas canvas, String text, float x, float y, Paint paint){
+    // TODO: - 22.05.17 remake it to use matrix rotation instead it much easier for calculation
+
+    private void drawDial(float angle, Canvas canvas, String text, Paint paint){
+
+        mTextPath.reset();
+        mTextPath.moveTo(centerX, centerY - radius * SCALE_RADIUS_INDEX);
+        mTextPath.lineTo(centerX + 100, centerY - radius * SCALE_RADIUS_INDEX);
+        mTextPath.close();
+
         paint.getTextBounds(text, 0, text.length(), mTextRect);
-        if(Float.parseFloat(text) >= 100){
-            canvas.drawText(text, x - mTextRect.width() / 2f - 10, y + mTextRect.height() / 2f, paint);
-        }else {
-            canvas.drawText(text, x - mTextRect.width() / 2f, y + mTextRect.height() / 2f, paint);
-        }
+
+        mRotateMatrix.reset();
+        mRotateMatrix.setRotate(90 - angle, centerX, centerY - radius);
+        mTextPath.transform(mRotateMatrix);
+
+        mRotateMatrix.reset();
+        mRotateMatrix.setRotate(- 90 + angle, centerX, centerY - radius * (1 - SCALE_RADIUS_INDEX));
+
+        mTextPath.transform(mRotateMatrix);
+        
+        mRotateMatrix.reset();
+        mRotateMatrix.setTranslate(-mTextRect.width() / 2f, 0);
+        mTextPath.transform(mRotateMatrix);
+
+        canvas.drawTextOnPath(text, mTextPath, 0, 0, paint);
     }
 
     private void changeFuelLevel(){
-        if(mCurrentFuelLevel != 0 && mCurrentFuelLevel <= MAX_FUEL_LEVEL){
+       if(mCurrentFuelLevel != 0 && mCurrentFuelLevel <= MAX_FUEL_LEVEL){
             mCurrentFuelLevel -= mSpeedFuelConsumptionIndex;
-        }else if(mCurrentFuelLevel <= 0 && go){
-            go = false;
         }
     }
 
@@ -460,13 +475,7 @@ public class SpeedometerView extends View {
         return (1 - mCurrentSpeed/mMaxSpeed)*baseAcceleration;
     }
 
-    // TODO: 22.05.17 remake it to use matrix rotation instead it much easier for calculation
-            private void calculateCirclePoint(float angle, float radius, PointF point) {
-        point.set((float) (centerX - radius * Math.cos(angle / 180 * Math.PI)),
-                (float) (centerY - radius * Math.sin(angle / 180 * Math.PI)));
-    }
-
-    // TODO: 23/05/17 update values in runtime, apply changed values
+    // TODO: - 23/05/17 update values in runtime, apply changed values
     public int getBackgroundColor() {
         return mBackgroundColor;
     }
@@ -610,9 +619,11 @@ public class SpeedometerView extends View {
     }
 
     public void setGo(boolean go) {
+
         if(!mIsInvalidation) {
             start();
         }
+
         this.go = go;
     }
 

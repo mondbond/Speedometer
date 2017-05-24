@@ -5,8 +5,8 @@
         <attr name="speedIndicatorColor" format="color|reference" />
         <attr name="beforeArrowSectorColor" format="color|reference" />
         <attr name="afterArrowSectorColor" format="color|reference" />
-        <attr name="arrowHeight" format="integer" />
 
+        <attr name="arrowHeight" format="integer" />
         <attr name="sectorRadius" format="integer" />
         <attr name="borderColor" format="integer" />
         <attr name="arrowColor" format="color|reference" />

@@ -8,8 +8,18 @@
 
     <com.example.mond.speedometer.SpeedometerView
         android:id="@+id/speedometer"
-        android:layout_width="200dp"
-        android:layout_height="100dp" />
+        android:layout_width="100dp"
+        android:layout_height="200dp"
+        app:backgroundColor="@color/colorAccent"
+        app:beforeArrowSectorColor="@color/pink"
+        app:afterArrowSectorColor="@color/red"
+        app:speedIndicatorColor="@color/blue"
+        app:borderColor="@color/blue"/>
+
+    <com.example.mond.speedometer.SpeedometerView
+        android:id="@+id/speedometer1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
     <Button
         android:id="@+id/stop_btn"
@@ -18,9 +28,12 @@
         android:text="@string/stop"
         tools:layout_editor_absoluteX="30dp"
         tools:layout_editor_absoluteY="205dp"
+        android:layout_marginLeft="23dp"
+        android:layout_marginStart="23dp"
         android:layout_alignBaseline="@+id/go_btn"
         android:layout_alignBottom="@+id/go_btn"
-        android:layout_centerHorizontal="true" />
+        android:layout_toRightOf="@+id/speedometer"
+        android:layout_toEndOf="@+id/speedometer"/>
 
     <Button
         android:id="@+id/go_btn"
@@ -32,9 +45,7 @@
         android:layout_below="@+id/speedometer"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_marginLeft="20dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="58dp" />
+        android:layout_marginTop="75dp"/>
 
     <TextView
         android:id="@+id/speed_value"
@@ -42,9 +53,28 @@
         android:layout_height="wrap_content"
         android:textSize="30sp"
         android:text="0"
-        android:layout_above="@+id/stop_btn"
-        android:layout_alignLeft="@+id/go_btn"
-        android:layout_alignStart="@+id/go_btn"
-        android:layout_marginLeft="44dp"
-        android:layout_marginStart="44dp" />
+        android:layout_below="@+id/speedometer"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="21dp"
+        android:layout_marginStart="21dp"
+        android:layout_marginTop="16dp"/>
+
+    <Button
+        android:id="@+id/refill"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/go_btn"
+        android:text="Refill"/>
+
+    <Button
+        android:id="@+id/setBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/stop_btn"
+        android:layout_alignStart="@+id/stop_btn"
+        android:layout_below="@+id/stop_btn"
+        android:text="random Color"/>
 </RelativeLayout>

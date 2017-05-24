@@ -7,24 +7,46 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.Random;
+
 public class MainActivity extends AppCompatActivity implements SpeedometerView.SpeedChangeListener {
 
-    SpeedometerView speedometer;
+    Random mRandom;
+    SpeedometerView mSpeedometer;
+    SpeedometerView mAnotherSpeedometer;
     TextView speedValue;
 
-    // TODO: 23/05/17 create layout with few  SpeedometerView, set up attributes from xml and from java code,
+
+    // - TODO: 23/05/17 create layout with few  SpeedometerView, set up attributes from xml and from java code,
     // test different sizes(match_parent, wrap_content, width=100dp, height=200dp)
     // test attributes change at the runtime (when you click the button, set random color).
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        speedometer = (SpeedometerView) findViewById(R.id.speedometer);
-        speedometer.setListener(this);
+        mRandom = new Random();
+
+        mSpeedometer = (SpeedometerView) findViewById(R.id.speedometer);
+        mAnotherSpeedometer = (SpeedometerView) findViewById(R.id.speedometer1);
+        mSpeedometer.setListener(this);
+
         speedValue = (TextView) findViewById(R.id.speed_value);
+
+        Button setBtn = (Button) findViewById(R.id.setBtn);
+        setBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mAnotherSpeedometer.setBackgroundColor(getRandomColor());
+                mAnotherSpeedometer.setSpeedIndicatorColor(getRandomColor());
+                mAnotherSpeedometer.setBeforeArrowSectorColor(getRandomColor());
+                mAnotherSpeedometer.setAfterArrowSectorColor(getRandomColor());
+                mAnotherSpeedometer.setArrowColor(getRandomColor());
+                mAnotherSpeedometer.setBorderColor(getRandomColor());
+            }
+        });
+
 
         Button stop = (Button) findViewById(R.id.stop_btn);
         Button go = (Button) findViewById(R.id.go_btn);
@@ -32,12 +54,14 @@ public class MainActivity extends AppCompatActivity implements SpeedometerView.S
         go.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if(speedometer.getCurrentFuelLevel() > 0) {
+                if(mSpeedometer.getCurrentFuelLevel() > 0) {
 
                     if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                        speedometer.setGo(true);
+                        mSpeedometer.setGo(true);
+                        mAnotherSpeedometer.setGo(true);
                     } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        speedometer.setGo(false);
+                        mSpeedometer.setGo(false);
+                        mAnotherSpeedometer.setGo(false);
                     }
                 }
 
@@ -45,17 +69,27 @@ public class MainActivity extends AppCompatActivity implements SpeedometerView.S
             }
         });
 
-
         stop.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if(event.getAction() == MotionEvent.ACTION_DOWN){
-                    speedometer.setStop(true);
+                    mSpeedometer.setStop(true);
+                    mAnotherSpeedometer.setStop(true);
                 } else if(event.getAction() == MotionEvent.ACTION_UP){
-                    speedometer.setStop(false);
+                    mSpeedometer.setStop(false);
+                    mAnotherSpeedometer.setStop(false);
                 }
 
                 return false;
+            }
+        });
+
+        Button refill = (Button) findViewById(R.id.refill);
+        refill.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+             mSpeedometer.setFuelMaxLevel();
+             mAnotherSpeedometer.setFuelMaxLevel();
             }
         });
     }
@@ -63,5 +97,34 @@ public class MainActivity extends AppCompatActivity implements SpeedometerView.S
     @Override
     public void onSpeedChange(float newSpeedValue) {
         speedValue.setText(String.valueOf((int) newSpeedValue));
+    }
+
+    private int getRandomColor(){
+        int color = 0;
+        switch (mRandom.nextInt(6)){
+            case 0:
+                color = getResources().getColor(R.color.blue);
+                break;
+            case 1:
+                color = getResources().getColor(R.color.red);
+                break;
+            case 2:
+                color = getResources().getColor(R.color.yellow);
+                break;
+            case 3:
+                color = getResources().getColor(R.color.green);
+                break;
+            case 4:
+                color = getResources().getColor(R.color.orange);
+                break;
+            case 5:
+                color = getResources().getColor(R.color.brown);
+                break;
+            case 6:
+                color = getResources().getColor(R.color.pink);
+                break;
+        }
+
+        return color;
     }
 }
