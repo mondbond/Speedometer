@@ -331,8 +331,6 @@ public class SpeedometerView extends View {
                 centerX + (int ) (radius * 0.3f * (mCurrentFuelLevel / mMaxFuelLevel)),
                 centerY - radius + (int) (radius * 0.47f));
 
-        // TODO: ? 23/05/17 this check should be performed after user refill fuel lever or after creation, not on each fraction
-
         if(mCurrentFuelLevel/mMaxFuelLevel < (float) 1/3){
             if(!mIsAlphaAnimating){
                 mIsAlphaAnimating = true;
@@ -423,7 +421,7 @@ public class SpeedometerView extends View {
                     }
 
                     if (stop) {
-                        // TODO: ? 23/05/17 debug mCurrentSpeed variable here!
+                        // TODO: - 23/05/17 debug mCurrentSpeed variable here!
                         changeSpeed(mCurrentSpeed -= calculateAcceleration(ACCELERATION_INDEX));
                     } else if (go && mCurrentFuelLevel > 0) {
                         changeSpeed(mCurrentSpeed += calculateAcceleration(mSpeedAccelerationIndex));
