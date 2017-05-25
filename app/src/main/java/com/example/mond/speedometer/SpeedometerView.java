@@ -301,14 +301,6 @@ public class SpeedometerView extends View {
 
     private void drawFuelLevel(Canvas canvas){
 
-        mFuelIcoRec = new RectF(
-                centerX - radius + radius * 0.8f,
-                centerY - radius + radius * 0.35f,
-                centerX,
-                centerY - radius + radius * 0.55f);
-
-        mBitmapMatrix.mapRect(mFuelIcoRec);
-
         mMatrixFilter = new float[]{
                 0, 0, 0, 0, (1 - mCurrentFuelLevel / 100) * 255,
                 0, 0, 0, 0, mCurrentFuelLevel / 100 * 255,
@@ -316,11 +308,17 @@ public class SpeedometerView extends View {
                 0, 0, 0, 1, 0
         };
 
-        canvas.drawBitmap(mFuelIco, null, mFuelIcoRec, mFuelPaint);
-
         mFuelPaint.setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(mMatrixFilter)));
         mFuelPaint.setStyle(Paint.Style.FILL);
 
+        mFuelIcoRec = new RectF(
+                centerX - radius + radius * 0.8f,
+                centerY - radius + radius * 0.35f,
+                centerX,
+                centerY - radius + radius * 0.55f);
+
+        mBitmapMatrix.mapRect(mFuelIcoRec);
+        canvas.drawBitmap(mFuelIco, null, mFuelIcoRec, mFuelPaint);
         mFuelLevel = new Rect(
                 centerX,
                 centerY - radius + (int) (radius * 0.44f),
@@ -406,20 +404,22 @@ public class SpeedometerView extends View {
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if(mCurrentSpeed > 0 || go) {
+                    if(mCurrentSpeed > 0 || go || mIsAlphaAnimating) {
                     handler.postDelayed(this, FRAME_RATE_DELAY_IN_MS);
                     }else {
                         mIsInvalidation = false;
                     }
 
-                    if (stop) {
+                    if(stop){
                         changeSpeed(mCurrentSpeed -= calculateAcceleration(ACCELERATION_INDEX));
-                    } else if (go && mCurrentFuelLevel > 0) {
-                        changeSpeed(mCurrentSpeed += calculateAcceleration(mSpeedAccelerationIndex));
-                        changeFuelLevel();
-                    } else if(mCurrentFuelLevel <= 0 && go){
-                        go = false;
-                    } else {
+                    }else if(go){
+                        if(mCurrentFuelLevel > 0){
+                            changeSpeed(mCurrentSpeed += calculateAcceleration(mSpeedAccelerationIndex));
+                            changeFuelLevel();
+                        }else {
+                            changeSpeed(mCurrentSpeed -= mSpeedOnNeutralIndex);
+                        }
+                    }else {
                         changeSpeed(mCurrentSpeed -= mSpeedOnNeutralIndex);
                     }
 
@@ -609,11 +609,11 @@ public class SpeedometerView extends View {
 
     public void setGo(boolean go) {
 
+        this.go = go;
+
         if(!mIsInvalidation) {
             start();
         }
-
-        this.go = go;
     }
 
     public SpeedChangeListener getListener() {

@@ -2,6 +2,7 @@ package com.example.mond.speedometer;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -42,24 +43,19 @@ public class MainActivity extends AppCompatActivity implements SpeedometerView.S
             }
         });
 
-
         Button stop = (Button) findViewById(R.id.stop_btn);
         Button go = (Button) findViewById(R.id.go_btn);
 
         go.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if(mSpeedometer.getCurrentFuelLevel() > 0) {
-
-                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                        mSpeedometer.setGo(true);
-                        mAnotherSpeedometer.setGo(true);
-                    } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        mSpeedometer.setGo(false);
-                        mAnotherSpeedometer.setGo(false);
-                    }
-                }
-
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                mSpeedometer.setGo(true);
+                mAnotherSpeedometer.setGo(true);
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                mSpeedometer.setGo(false);
+                mAnotherSpeedometer.setGo(false);
+            }
                 return false;
             }
         });
