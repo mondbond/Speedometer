@@ -463,12 +463,19 @@ public class SpeedometerView extends View {
         return (1 - mCurrentSpeed/mMaxSpeed)*baseAcceleration;
     }
 
+    private void invalidateIfNoAnimation(){
+        if(!mIsInvalidation){
+            invalidate();
+        }
+    }
+
     public int getBackgroundColor() {
         return mBackgroundColor;
     }
 
     public void setBackgroundColor(int mBackgroundColor) {
         this.mBackgroundColor = mBackgroundColor;
+        invalidateIfNoAnimation();
     }
 
     public int getSpeedIndicatorColor() {
@@ -477,6 +484,7 @@ public class SpeedometerView extends View {
 
     public void setSpeedIndicatorColor(int mSpeedIndicatorColor) {
         this.mSpeedIndicatorColor = mSpeedIndicatorColor;
+        invalidateIfNoAnimation();
     }
 
     public int getBeforeArrowSectorColor() {
@@ -485,6 +493,7 @@ public class SpeedometerView extends View {
 
     public void setBeforeArrowSectorColor(int mBeforeArrowSectorColor) {
         this.mBeforeArrowSectorColor = mBeforeArrowSectorColor;
+        invalidateIfNoAnimation();
     }
 
     public int getAfterArrowSectorColor() {
@@ -493,6 +502,7 @@ public class SpeedometerView extends View {
 
     public void setAfterArrowSectorColor(int mAfterArrowSectorColor) {
         this.mAfterArrowSectorColor = mAfterArrowSectorColor;
+        invalidateIfNoAnimation();
     }
 
     public int getSectorRadius() {
@@ -501,6 +511,7 @@ public class SpeedometerView extends View {
 
     public void setSectorRadius(int mSectorRadius) {
         this.mSectorRadius = mSectorRadius;
+        invalidateIfNoAnimation();
     }
 
     public int getBorderColor() {
@@ -509,6 +520,7 @@ public class SpeedometerView extends View {
 
     public void setBorderColor(int mBorderColor) {
         this.mBorderColor = mBorderColor;
+        invalidateIfNoAnimation();
     }
 
     public int getArrowColor() {
@@ -517,6 +529,7 @@ public class SpeedometerView extends View {
 
     public void setArrowColor(int mArrowColor) {
         this.mArrowColor = mArrowColor;
+        invalidateIfNoAnimation();
     }
 
     public float getArrowHeight() {
@@ -529,6 +542,7 @@ public class SpeedometerView extends View {
         }else {
             this.mArrowHeight = mArrowHeight;
         }
+        invalidateIfNoAnimation();
     }
 
     public float getInnerSectorRadius() {
@@ -541,6 +555,7 @@ public class SpeedometerView extends View {
         }else {
             this.mInnerSectorRadius = mInnerSectorRadius;
         }
+        invalidateIfNoAnimation();
     }
 
     public float getOuterSectorRadius() {
@@ -554,6 +569,7 @@ public class SpeedometerView extends View {
         }else {
             this.mOuterSectorRadius = mOuterSectorRadius;
         }
+        invalidateIfNoAnimation();
     }
 
     public int getMaxSpeed() {
@@ -567,22 +583,7 @@ public class SpeedometerView extends View {
         }else {
             this.mMaxSpeed = mMaxSpeed;
         }
-    }
-
-    public Paint getPaint() {
-        return mPaint;
-    }
-
-    public void setPaint(Paint mPaint) {
-        this.mPaint = mPaint;
-    }
-
-    public TextPaint getTextPaint() {
-        return mTextPaint;
-    }
-
-    public void setTextPaint(TextPaint mTextPaint) {
-        this.mTextPaint = mTextPaint;
+        invalidateIfNoAnimation();
     }
 
     public float getCurrentSpeed() {
@@ -591,6 +592,7 @@ public class SpeedometerView extends View {
 
     public void setCurrentSpeed(float mCurrentSpeed) {
         this.mCurrentSpeed = mCurrentSpeed;
+        invalidateIfNoAnimation();
     }
 
     public boolean isStop() {
@@ -632,10 +634,7 @@ public class SpeedometerView extends View {
         }else {
             this.mCurrentFuelLevel = currentFuelLevel;
         }
-    }
-
-    public void refillFuelLevel(){
-        mCurrentFuelLevel = mMaxFuelLevel;
+        invalidateIfNoAnimation();
     }
 
     public float getMaxFuelLevel() {
@@ -644,10 +643,12 @@ public class SpeedometerView extends View {
 
     public void setMaxFuelLevel(float mMaxFuelLevel) {
         this.mMaxFuelLevel = mMaxFuelLevel;
+        invalidateIfNoAnimation();
     }
 
     public void setCurrentFuelLevel(int newCurrentFuelLevel){
         mCurrentFuelLevel = newCurrentFuelLevel;
+        invalidateIfNoAnimation();
     }
 
     public float getSpeedAccelerationIndex() {
@@ -660,6 +661,7 @@ public class SpeedometerView extends View {
         }else {
             this.mSpeedAccelerationIndex = mSpeedAccelerationIndex;
         }
+        invalidateIfNoAnimation();
     }
 
     public float getSpeedOnNeutralIndex() {
@@ -672,6 +674,7 @@ public class SpeedometerView extends View {
         }else {
             this.mSpeedOnNeutralIndex = mSpeedOnNeutralIndex;
         }
+        invalidateIfNoAnimation();
     }
 
     public float getSpeedFuelConsumptionIndex() {
@@ -684,10 +687,12 @@ public class SpeedometerView extends View {
         } else {
             this.mSpeedFuelConsumptionIndex = mSpeedFuelConsumptionIndex;
         }
+        invalidateIfNoAnimation();
     }
 
-    public void setFuelMaxLevel(){
+    public void refill(){
         mCurrentFuelLevel = MAX_FUEL_LEVEL;
+        invalidateIfNoAnimation();
     }
 
 

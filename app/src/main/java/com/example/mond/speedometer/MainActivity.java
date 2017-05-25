@@ -83,8 +83,8 @@ public class MainActivity extends AppCompatActivity implements SpeedometerView.S
         refill.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-             mSpeedometer.setFuelMaxLevel();
-             mAnotherSpeedometer.setFuelMaxLevel();
+             mSpeedometer.refill();
+             mAnotherSpeedometer.refill();
             }
         });
     }
