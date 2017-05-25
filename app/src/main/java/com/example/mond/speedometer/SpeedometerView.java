@@ -19,11 +19,9 @@ import android.os.Handler;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
-// TODO: 23/05/17 - add possibility to refill fuel level
 public class SpeedometerView extends View {
 
     private final int FRAME_RATE_DELAY_IN_MS = 30;
@@ -126,7 +124,6 @@ public class SpeedometerView extends View {
 
         final TypedArray attr = getContext().obtainStyledAttributes(
                 attrs, R.styleable.SpeedometerView, defStyle, 0);
-        // TODO: - 22.05.17 implement check for errors also on setters
         mBackgroundColor = attr.getColor(R.styleable.SpeedometerView_backgroundColor, Color.WHITE);
         mSpeedIndicatorColor = attr.getColor(R.styleable.SpeedometerView_speedIndicatorColor, Color.BLACK);
         mBeforeArrowSectorColor = attr.getColor(R.styleable.SpeedometerView_beforeArrowSectorColor, Color.RED);
@@ -135,7 +132,6 @@ public class SpeedometerView extends View {
         mArrowColor = attr.getColor(R.styleable.SpeedometerView_arrowColor, Color.BLACK);
 
         setArrowHeight((float) attr.getInteger(R.styleable.SpeedometerView_arrowHeight, 60)/100);
-        // TODO: - 23/05/17 DRY!!! for each attribute should be getter/setter and you can call setter to validate input data
         setInnerSectorRadius(((float) attr.getInteger(R.styleable.SpeedometerView_innerSectorRadius, 30)) / 100);
         setOuterSectorRadius(((float) (attr.getInteger(R.styleable.SpeedometerView_outerSectorRadius, 40))) / 100);
         setMaxSpeed(attr.getInteger(R.styleable.SpeedometerView_maxSpeed, 90));
@@ -349,8 +345,6 @@ public class SpeedometerView extends View {
 
         mPaint.setColor(mArrowColor);
         mRotateMatrix.reset();
-        // TODO: - 23/05/17  check information about Matrix transformation
-        // http://startandroid.ru/ru/uroki/vse-uroki-spiskom/317-urok-144-risovanie-matrix-preobrazovanija.html
         mRotateMatrix.setRotate(-90 + ((float) 180 / mMaxSpeed) * mCurrentSpeed, centerX, centerY);
         mPaint.setStyle(Paint.Style.FILL);
 
@@ -407,13 +401,11 @@ public class SpeedometerView extends View {
 
     private void start() {
         mIsInvalidation = true;
-        // TODO: - 23/05/17 no need to update view when the animation idle
         final Handler handler = new Handler();
 
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    // TODO: - 23/05/17 update invalidation time, why 100??? avoid meaningless hardcode values
                     if(mCurrentSpeed > 0 || go) {
                     handler.postDelayed(this, FRAME_RATE_DELAY_IN_MS);
                     }else {
@@ -421,7 +413,6 @@ public class SpeedometerView extends View {
                     }
 
                     if (stop) {
-                        // TODO: - 23/05/17 debug mCurrentSpeed variable here!
                         changeSpeed(mCurrentSpeed -= calculateAcceleration(ACCELERATION_INDEX));
                     } else if (go && mCurrentFuelLevel > 0) {
                         changeSpeed(mCurrentSpeed += calculateAcceleration(mSpeedAccelerationIndex));
@@ -434,11 +425,8 @@ public class SpeedometerView extends View {
 
                     invalidate();
                 }
-                // TODO: - 23/05/17 why 3000?
             }, 0);
     }
-
-    // TODO: - 22.05.17 remake it to use matrix rotation instead it much easier for calculation
 
     private void drawDial(float angle, Canvas canvas, String text, Paint paint){
 
@@ -475,7 +463,6 @@ public class SpeedometerView extends View {
         return (1 - mCurrentSpeed/mMaxSpeed)*baseAcceleration;
     }
 
-    // TODO: - 23/05/17 update values in runtime, apply changed values
     public int getBackgroundColor() {
         return mBackgroundColor;
     }
