@@ -24,7 +24,8 @@ public class MainActivity extends AppCompatActivity implements SpeedometerView.S
         mRandom = new Random();
 
         mSpeedometer = (SpeedometerView) findViewById(R.id.speedometer);
-        mAnotherSpeedometer = (SpeedometerView) findViewById(R.id.speedometer1);
+//        mAnotherSpeedometer = (SpeedometerView) findViewById(R.id.speedometer1);
+        mAnotherSpeedometer = mSpeedometer;
         mSpeedometer.setListener(this);
 
         speedValue = (TextView) findViewById(R.id.speed_value);

@@ -8,7 +8,7 @@
 
     <com.example.mond.speedometer.SpeedometerView
         android:id="@+id/speedometer"
-        android:layout_width="100dp"
+        android:layout_width="200dp"
         android:layout_height="200dp"
         app:backgroundColor="@color/colorAccent"
         app:beforeArrowSectorColor="@color/pink"
@@ -16,10 +16,10 @@
         app:speedIndicatorColor="@color/blue"
         app:borderColor="@color/blue"/>
 
-    <com.example.mond.speedometer.SpeedometerView
-        android:id="@+id/speedometer1"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+    <!--<com.example.mond.speedometer.SpeedometerView-->
+        <!--android:id="@+id/speedometer1"-->
+        <!--android:layout_width="200dp"-->
+        <!--android:layout_height="200dp"/>-->
 
     <Button
         android:id="@+id/stop_btn"
