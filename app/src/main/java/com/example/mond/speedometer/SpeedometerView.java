@@ -19,11 +19,13 @@ import android.os.Handler;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 
+import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
 public class SpeedometerView extends View {
 
+    private static final String TAG = SpeedometerView.class.getSimpleName();
     private final int FRAME_RATE_DELAY_IN_MS = 30;
 
     private boolean mIsInvalidation;
@@ -122,9 +124,11 @@ public class SpeedometerView extends View {
 
     private void init(AttributeSet attrs, int defStyle) {
 
-        final TypedArray attr = getContext().obtainStyledAttributes(
-                attrs, R.styleable.SpeedometerView, defStyle, 0);
-        mBackgroundColor = attr.getColor(R.styleable.SpeedometerView_backgroundColor, Color.WHITE);
+        TypedArray attr = null;
+        try {
+            attr = getContext().getTheme()
+                    .obtainStyledAttributes(attrs, R.styleable.SpeedometerView, defStyle, 0);
+        mBackgroundColor = attr.getColor(R.styleable.SpeedometerView_backgroundColor, Color.GREEN);
         mSpeedIndicatorColor = attr.getColor(R.styleable.SpeedometerView_speedIndicatorColor, Color.BLACK);
         mBeforeArrowSectorColor = attr.getColor(R.styleable.SpeedometerView_beforeArrowSectorColor, Color.RED);
         mAfterArrowSectorColor = attr.getColor(R.styleable.SpeedometerView_afterArrowSectorColor, Color.BLUE);
@@ -138,7 +142,15 @@ public class SpeedometerView extends View {
         setSpeedAccelerationIndex(attr.getFloat(R.styleable.SpeedometerView_speedAccelerationIndex, 50) * ((float) FRAME_RATE_DELAY_IN_MS / 100));
         setSpeedOnNeutralIndex(attr.getFloat(R.styleable.SpeedometerView_speedOnNeutralIndex, 2) * ((float) FRAME_RATE_DELAY_IN_MS / 100));
         setSpeedFuelConsumptionIndex(attr.getFloat(R.styleable.SpeedometerView_speedFuelConsumptionIndex, 5) * ((float) FRAME_RATE_DELAY_IN_MS / 100));
-        attr.recycle();
+
+        } catch (Exception e) {
+           e.printStackTrace();
+        } finally {
+            if (attr != null) {
+                attr.recycle();
+            }
+        }
+
 
         mTextPaint = new TextPaint();
         mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
@@ -165,6 +177,7 @@ public class SpeedometerView extends View {
                 mFuelPaint.setAlpha(((int) (float) valueAnimator.getAnimatedValue()));
             }
         });
+
 
         start();
     }
@@ -222,30 +235,31 @@ public class SpeedometerView extends View {
         super.onDraw(canvas);
 
         drawBackgroundCircle(canvas);
-
-        drawArrowCircle(canvas);
-
-        drawBorderCircle(canvas);
-
-        drawInnerCircle(canvas);
-
-        drawFuelLevel(canvas);
-
-        drawScale(canvas);
-
-        drawSpeedIndicator(canvas);
-
-        drawArrow(canvas);
+//
+//        drawArrowCircle(canvas);
+//
+//        drawBorderCircle(canvas);
+//
+//        drawInnerCircle(canvas);
+//
+//        drawFuelLevel(canvas);
+//
+//        drawScale(canvas);
+//
+//        drawSpeedIndicator(canvas);
+//
+//        drawArrow(canvas);
     }
 
     private void drawBackgroundCircle(Canvas canvas){
         mPaint.setColor(mBackgroundColor);
         mPaint.setStyle(Paint.Style.FILL);
-
-        mBackgroundCircleRec = new RectF(
-                centerX - radius + (radius * BORDER_HEIGHT_INDEX), centerY - radius + (radius * BORDER_HEIGHT_INDEX),
-                centerX + radius - (radius * BORDER_HEIGHT_INDEX), centerY + radius - (radius * BORDER_HEIGHT_INDEX));
-
+        // TODO: 26/05/17 here is the problem with preview
+//        mBackgroundCircleRec = new RectF(
+//                centerX - radius + (radius * BORDER_HEIGHT_INDEX), centerY - radius + (radius * BORDER_HEIGHT_INDEX),
+//                centerX + radius - (radius * BORDER_HEIGHT_INDEX), centerY + radius - (radius * BORDER_HEIGHT_INDEX));
+        mBackgroundCircleRec = new RectF(0, 0, getWidth(), getHeight());
+        Log.d(TAG, "drawBackgroundCircle: Rect: " + mBackgroundCircleRec);
         canvas.drawArc(mBackgroundCircleRec, -180, 180, false, mPaint);
     }
 
@@ -422,10 +436,12 @@ public class SpeedometerView extends View {
                     }else {
                         changeSpeed(mCurrentSpeed -= mSpeedOnNeutralIndex);
                     }
-
+                    requestLayout();
                     invalidate();
                 }
             }, 0);
+        requestLayout();
+        invalidate();
     }
 
     private void drawDial(float angle, Canvas canvas, String text, Paint paint){
@@ -445,7 +461,7 @@ public class SpeedometerView extends View {
         mRotateMatrix.setRotate(- 90 + angle, centerX, centerY - radius * (1 - SCALE_RADIUS_INDEX));
 
         mTextPath.transform(mRotateMatrix);
-        
+
         mRotateMatrix.reset();
         mRotateMatrix.setTranslate(-mTextRect.width() / 2f, 0);
         mTextPath.transform(mRotateMatrix);
