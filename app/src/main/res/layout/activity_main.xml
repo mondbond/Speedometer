@@ -16,10 +16,10 @@
         app:speedIndicatorColor="@color/blue"
         app:borderColor="@color/blue"/>
 
-    <!--<com.example.mond.speedometer.SpeedometerView-->
-        <!--android:id="@+id/speedometer1"-->
-        <!--android:layout_width="200dp"-->
-        <!--android:layout_height="200dp"/>-->
+    <com.example.mond.speedometer.SpeedometerView
+        android:id="@+id/speedometer1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
     <Button
         android:id="@+id/stop_btn"

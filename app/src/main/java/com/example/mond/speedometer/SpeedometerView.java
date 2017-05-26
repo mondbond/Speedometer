@@ -25,7 +25,6 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 
 public class SpeedometerView extends View {
 
-    private static final String TAG = SpeedometerView.class.getSimpleName();
     private final int FRAME_RATE_DELAY_IN_MS = 30;
 
     private boolean mIsInvalidation;
@@ -151,7 +150,6 @@ public class SpeedometerView extends View {
             }
         }
 
-
         mTextPaint = new TextPaint();
         mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setTextAlign(Paint.Align.LEFT);
@@ -177,7 +175,6 @@ public class SpeedometerView extends View {
                 mFuelPaint.setAlpha(((int) (float) valueAnimator.getAnimatedValue()));
             }
         });
-
 
         start();
     }
@@ -212,20 +209,7 @@ public class SpeedometerView extends View {
             height = desiredHeight;
         }
 
-        paddingLeft = getPaddingLeft();
-        paddingTop = getPaddingTop();
-        paddingRight = getPaddingRight();
-        paddingBottom = getPaddingBottom();
-
-        contentWidth = getWidth() - paddingLeft - paddingRight;
-        contentHeight = getHeight() - paddingTop - paddingBottom;
-
-        centerX = paddingLeft + contentWidth / 2;
-        centerY = paddingTop + contentHeight;
-
-        radius = Math.min(contentWidth / 2, contentHeight);
-
-        mInnerCircleWidth = radius * (mOuterSectorRadius - mInnerSectorRadius);
+        setUpDimensions();
 
         setMeasuredDimension(width, height);
     }
@@ -234,32 +218,33 @@ public class SpeedometerView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        if(isInEditMode()) {
+            setUpDimensions();
+        }
+
         drawBackgroundCircle(canvas);
-//
-//        drawArrowCircle(canvas);
-//
-//        drawBorderCircle(canvas);
-//
-//        drawInnerCircle(canvas);
-//
-//        drawFuelLevel(canvas);
-//
-//        drawScale(canvas);
-//
-//        drawSpeedIndicator(canvas);
-//
-//        drawArrow(canvas);
+
+        drawArrowCircle(canvas);
+
+        drawBorderCircle(canvas);
+
+        drawInnerCircle(canvas);
+
+        drawFuelLevel(canvas);
+
+        drawScale(canvas);
+
+        drawSpeedIndicator(canvas);
+
+        drawArrow(canvas);
     }
 
     private void drawBackgroundCircle(Canvas canvas){
         mPaint.setColor(mBackgroundColor);
         mPaint.setStyle(Paint.Style.FILL);
-        // TODO: 26/05/17 here is the problem with preview
-//        mBackgroundCircleRec = new RectF(
-//                centerX - radius + (radius * BORDER_HEIGHT_INDEX), centerY - radius + (radius * BORDER_HEIGHT_INDEX),
-//                centerX + radius - (radius * BORDER_HEIGHT_INDEX), centerY + radius - (radius * BORDER_HEIGHT_INDEX));
-        mBackgroundCircleRec = new RectF(0, 0, getWidth(), getHeight());
-        Log.d(TAG, "drawBackgroundCircle: Rect: " + mBackgroundCircleRec);
+        mBackgroundCircleRec = new RectF(
+                centerX - radius + (radius * BORDER_HEIGHT_INDEX), centerY - radius + (radius * BORDER_HEIGHT_INDEX),
+                centerX + radius - (radius * BORDER_HEIGHT_INDEX), centerY + radius - (radius * BORDER_HEIGHT_INDEX));
         canvas.drawArc(mBackgroundCircleRec, -180, 180, false, mPaint);
     }
 
@@ -479,6 +464,23 @@ public class SpeedometerView extends View {
         return (1 - mCurrentSpeed/mMaxSpeed)*baseAcceleration;
     }
 
+    private void setUpDimensions(){
+        paddingLeft = getPaddingLeft();
+        paddingTop = getPaddingTop();
+        paddingRight = getPaddingRight();
+        paddingBottom = getPaddingBottom();
+
+        contentWidth = getWidth() - paddingLeft - paddingRight;
+        contentHeight = getHeight() - paddingTop - paddingBottom;
+
+        centerX = paddingLeft + contentWidth / 2;
+        centerY = paddingTop + contentHeight;
+
+        radius = Math.min(contentWidth / 2, contentHeight);
+
+        mInnerCircleWidth = radius * (mOuterSectorRadius - mInnerSectorRadius);
+    }
+
     public int getBackgroundColor() {
         return mBackgroundColor;
     }
@@ -622,7 +624,6 @@ public class SpeedometerView extends View {
     }
 
     public void setGo(boolean go) {
-
         if(!mIsInvalidation) {
             start();
         }
