@@ -212,20 +212,7 @@ public class SpeedometerView extends View {
             height = desiredHeight;
         }
 
-        paddingLeft = getPaddingLeft();
-        paddingTop = getPaddingTop();
-        paddingRight = getPaddingRight();
-        paddingBottom = getPaddingBottom();
-
-        contentWidth = getWidth() - paddingLeft - paddingRight;
-        contentHeight = getHeight() - paddingTop - paddingBottom;
-
-        centerX = paddingLeft + contentWidth / 2;
-        centerY = paddingTop + contentHeight;
-
-        radius = Math.min(contentWidth / 2, contentHeight);
-
-        mInnerCircleWidth = radius * (mOuterSectorRadius - mInnerSectorRadius);
+        setDimensions();
 
         setMeasuredDimension(width, height);
     }
@@ -234,32 +221,33 @@ public class SpeedometerView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        if(isInEditMode()){
+            setDimensions();
+        }
+
         drawBackgroundCircle(canvas);
-//
-//        drawArrowCircle(canvas);
-//
-//        drawBorderCircle(canvas);
-//
-//        drawInnerCircle(canvas);
-//
-//        drawFuelLevel(canvas);
-//
-//        drawScale(canvas);
-//
-//        drawSpeedIndicator(canvas);
-//
-//        drawArrow(canvas);
+
+        drawArrowCircle(canvas);
+
+        drawBorderCircle(canvas);
+
+        drawInnerCircle(canvas);
+
+        drawFuelLevel(canvas);
+
+        drawScale(canvas);
+
+        drawSpeedIndicator(canvas);
+
+        drawArrow(canvas);
     }
 
     private void drawBackgroundCircle(Canvas canvas){
         mPaint.setColor(mBackgroundColor);
         mPaint.setStyle(Paint.Style.FILL);
-        // TODO: 26/05/17 here is the problem with preview
-//        mBackgroundCircleRec = new RectF(
-//                centerX - radius + (radius * BORDER_HEIGHT_INDEX), centerY - radius + (radius * BORDER_HEIGHT_INDEX),
-//                centerX + radius - (radius * BORDER_HEIGHT_INDEX), centerY + radius - (radius * BORDER_HEIGHT_INDEX));
-        mBackgroundCircleRec = new RectF(0, 0, getWidth(), getHeight());
-        Log.d(TAG, "drawBackgroundCircle: Rect: " + mBackgroundCircleRec);
+        mBackgroundCircleRec = new RectF(
+                centerX - radius + (radius * BORDER_HEIGHT_INDEX), centerY - radius + (radius * BORDER_HEIGHT_INDEX),
+                centerX + radius - (radius * BORDER_HEIGHT_INDEX), centerY + radius - (radius * BORDER_HEIGHT_INDEX));
         canvas.drawArc(mBackgroundCircleRec, -180, 180, false, mPaint);
     }
 
@@ -483,6 +471,23 @@ public class SpeedometerView extends View {
         if(!mIsInvalidation){
             invalidate();
         }
+    }
+
+    private void setDimensions(){
+        paddingLeft = getPaddingLeft();
+        paddingTop = getPaddingTop();
+        paddingRight = getPaddingRight();
+        paddingBottom = getPaddingBottom();
+
+        contentWidth = getWidth() - paddingLeft - paddingRight;
+        contentHeight = getHeight() - paddingTop - paddingBottom;
+
+        centerX = paddingLeft + contentWidth / 2;
+        centerY = paddingTop + contentHeight;
+
+        radius = Math.min(contentWidth / 2, contentHeight);
+
+        mInnerCircleWidth = radius * (mOuterSectorRadius - mInnerSectorRadius);
     }
 
     public int getBackgroundColor() {
